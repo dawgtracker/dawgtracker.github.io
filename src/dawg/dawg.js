@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import './dawg.css'
 
 const UnderdogTracker = () => {
@@ -15,9 +14,6 @@ const UnderdogTracker = () => {
     const [sortMethod, setSortMethod] = useState('time');
     const [filterByTeams, setFilterByTeams] = useState(true);
     const [bettingMode, setBettingMode] = useState('underdog');
-
-    const API_KEY = process.env.REACT_APP_API_KEY;
-    const BASE_URL = "https://api.the-odds-api.com/v4";
 
     const SPORTS_CACHE_KEY = "underdogSportsCache";
     const ODDS_CACHE_KEY = "underdogOddsCache";
@@ -172,51 +168,13 @@ const UnderdogTracker = () => {
     };
 
     useEffect(() => {
-        const fetchSports = async () => {
-            try {
-                const cachedSports = localStorage.getItem(SPORTS_CACHE_KEY);
-                const cachedOdds = localStorage.getItem(ODDS_CACHE_KEY);
-                const cacheTime = localStorage.getItem(CACHE_TIME_KEY);
-                setLastUpdated(cacheTime || 'Unknown');
-
-                if (cachedSports && cachedOdds && !shouldRefreshData()) {
-                    setAvailableSports(JSON.parse(cachedSports));
-                    processCachedOdds(JSON.parse(cachedOdds));
-                    return;
-                }
-
-                const response = await axios.get(`${BASE_URL}/sports`, {
-                    params: { apiKey: API_KEY }
-                });
-                const sportsData = response.data;
-                setAvailableSports(sportsData);
-                localStorage.setItem(SPORTS_CACHE_KEY, JSON.stringify(sportsData));
-
-                const ncaaBasketballSports = sportsData.filter(
-                    sport => sport.key === "basketball_ncaab"
-                );
-
-                if (ncaaBasketballSports.length > 0) {
-                    fetchOddsForSport("basketball_ncaab");
-                } else {
-                    setError('Could not find NCAA basketball in available sports. Available sports: ' +
-                        sportsData.map(s => s.key).join(', '));
-                    setLoading(false);
-                }
-            } catch (err) {
-                setError('Error fetching available sports: ' + err.message);
-                setLoading(false);
-            }
-        };
-
-        fetchSports();
+        fetchOddsForSport("basketball_ncaab");
 
         const checkForRefresh = () => {
             if (shouldRefreshData()) {
-                localStorage.removeItem(SPORTS_CACHE_KEY);
                 localStorage.removeItem(ODDS_CACHE_KEY);
                 localStorage.removeItem(CACHE_TIME_KEY);
-                fetchSports();
+                fetchOddsForSport("basketball_ncaab");
             }
         };
 
@@ -254,61 +212,32 @@ const UnderdogTracker = () => {
     };
 
     const fetchSports = async () => {
-        try {
-            const response = await axios.get(`${BASE_URL}/sports`, {
-                params: { apiKey: API_KEY }
-            });
-            const sportsData = response.data;
-            setAvailableSports(sportsData);
-            localStorage.setItem(SPORTS_CACHE_KEY, JSON.stringify(sportsData));
-
-            const ncaaBasketballSports = sportsData.filter(sport =>
-                sport.key.includes('basketball') &&
-                (sport.key.includes('ncaa') || sport.key.includes('college'))
-            );
-
-            if (ncaaBasketballSports.length > 0) {
-                fetchOddsForSport(ncaaBasketballSports[0].key);
-            } else {
-                setError('Could not find NCAA basketball in available sports.');
-                setLoading(false);
-            }
-        } catch (err) {
-            setError('Error fetching available sports: ' + err.message);
-            setLoading(false);
-        }
+        fetchOddsForSport("basketball_ncaab");
     };
 
     const fetchOddsForSport = async (sportKey) => {
         try {
             setLoading(true);
-            const response = await axios.get(`${BASE_URL}/sports/${sportKey}/odds`, {
-                params: {
-                    apiKey: API_KEY,
-                    regions: 'us',
-                    markets: 'h2h,spreads',
-                    oddsFormat: 'american'
-                }
-            });
+            const response = await fetch('/odds.json');
+            const oddsData = await response.json();
 
-            const scoresResponse = await axios.get(`${BASE_URL}/sports/${sportKey}/scores`, {
-                params: { apiKey: API_KEY, daysFrom: 1 }
-            });
+            const scoresResponse = await fetch('/scores.json');
+            const scoresData = await scoresResponse.json();
 
             const cachedCompletedGames = JSON.parse(localStorage.getItem(COMPLETED_GAMES_CACHE_KEY) || '[]');
-            const newCompletedGames = scoresResponse.data.filter(score =>
+            const newCompletedGames = scoresData.filter(score =>
                 score.completed && score.scores &&
                 !cachedCompletedGames.some(cached => cached.id === score.id)
             );
             const mergedCompletedGames = [...cachedCompletedGames, ...newCompletedGames];
             localStorage.setItem(COMPLETED_GAMES_CACHE_KEY, JSON.stringify(mergedCompletedGames));
-            localStorage.setItem(ODDS_CACHE_KEY, JSON.stringify(response.data));
+            localStorage.setItem(ODDS_CACHE_KEY, JSON.stringify(oddsData));
 
             const currentDate = new Date().toDateString();
             localStorage.setItem(CACHE_TIME_KEY, currentDate);
             setLastUpdated(currentDate);
 
-            const processedGames = processGamesData(response.data);
+            const processedGames = processGamesData(oddsData);
             setGames(processedGames);
             setLoading(false);
         } catch (err) {
