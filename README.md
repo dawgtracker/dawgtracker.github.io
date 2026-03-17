@@ -1,2 +1,2 @@
 # Dawg Demo
-![dawg image](https://github.com/joshamstutz/dawg/blob/main/dawg.jpg?raw=true)
+![dawg image]((https://github.com/dawgtracker/dawg/blob/main/dawgexample.jpeg))
