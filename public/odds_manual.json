@@ -6,6 +6,7 @@
     "commence_time": "2026-03-17T22:41:04Z",
     "home_team": "Howard Bison",
     "away_team": "UMBC Retrievers",
+    "completed": true,
     "bookmakers": [{"key": "draftkings", "title": "DraftKings", "last_update": "2026-03-17T22:41:04Z", "markets": [{"key": "h2h", "last_update": "2026-03-17T22:41:04Z", "outcomes": [{"name": "Howard Bison", "price": -110}, {"name": "UMBC Retrievers", "price": -110}]}]}]
   },
   {
@@ -15,6 +16,7 @@
     "commence_time": "2026-03-18T01:29:44Z",
     "home_team": "Texas Longhorns",
     "away_team": "NC State Wolfpack",
+    "completed": true,
     "bookmakers": [{"key": "draftkings", "title": "DraftKings", "last_update": "2026-03-18T01:29:44Z", "markets": [{"key": "h2h", "last_update": "2026-03-18T01:29:44Z", "outcomes": [{"name": "Texas Longhorns", "price": 100}, {"name": "NC State Wolfpack", "price": -120}]}]}]
   }
 ]
