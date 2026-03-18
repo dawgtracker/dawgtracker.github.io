@@ -13,6 +13,7 @@ const UnderdogTracker = () => {
     const [filterByTeams, setFilterByTeams] = useState(true);
     const [bettingMode, setBettingMode] = useState('underdog');
     const [tossupGames, setTossupGames] = useState([]);
+    const [completedGamesData, setCompletedGamesData] = useState([]);
 
     const CACHE_TIME_KEY = "underdogCacheTime";
     const COMPLETED_GAMES_CACHE_KEY = "underdogCompletedGamesCache";
@@ -147,6 +148,7 @@ const UnderdogTracker = () => {
             );
             const mergedCompletedGames = [...cachedCompletedGames, ...newCompletedGames];
             localStorage.setItem(COMPLETED_GAMES_CACHE_KEY, JSON.stringify(mergedCompletedGames));
+            setCompletedGamesData(mergedCompletedGames);
 
             const processedGames = processGamesData(oddsData);
             setGames(processedGames);
@@ -204,7 +206,7 @@ const UnderdogTracker = () => {
     };
 
     useEffect(() => {
-        const cachedCompletedGames = JSON.parse(localStorage.getItem(COMPLETED_GAMES_CACHE_KEY) || '[]');
+        const cachedCompletedGames = completedGamesData;
 
         const cachedProcessedGames = cachedCompletedGames.map(game => {
             const originalOddsKey = `original_odds_${game.id}`;
@@ -260,7 +262,7 @@ const UnderdogTracker = () => {
         const totalProfitLoss = bettingResults.reduce((sum, game) => sum + game.potentialProfit, 0);
         setProfitLoss(totalProfitLoss);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [games, betAmount, filterByTeams, bettingMode]);
+    }, [games, betAmount, filterByTeams, bettingMode, completedGamesData]);
 
     const formatOdds = (odds) => {
         if (!odds) return "N/A";
