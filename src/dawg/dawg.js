@@ -410,15 +410,18 @@ const UnderdogTracker = () => {
                                             </div>
                                             <div className="result">
                                                 <span>Result: </span>
-                                                <span className={game.isTossup ? '' : game.pickWon ? 'profit' : 'loss'}>
-                                                    {game.isTossup ? "Pick'em" : game.pickWon ? `${modeLabel} Won!` : `${modeLabel} Lost`}                                                </span>
+                                                <span
+                                                    className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
+                                                    {game.isTossup ? "Pick'em" : game.pickWon ? `${modeLabel} Won!` : `${modeLabel} Lost`}
+                                                </span>
                                             </div>
                                             <div className="bet-result">
                                                 <span>Bet Result: </span>
                                                 <span
-                                                    className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>                                                    {game.isTossup ? '$0.00' : game.pickWon
-                                                    ? `+$${game.potentialProfit.toFixed(2)}`
-                                                    : `-$${betAmount.toFixed(2)}`}
+                                                    className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
+                                                    {game.isTossup ? '$0.00' : game.pickWon
+                                                        ? `+$${game.potentialProfit.toFixed(2)}`
+                                                        : `-$${betAmount.toFixed(2)}`}
                                                 </span>
                                             </div>
                                         </div>
