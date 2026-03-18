@@ -58,7 +58,8 @@ const UnderdogTracker = () => {
         "Arkansas": "Arkansas Razorbacks",
         "Hawaii": "Hawai'i Rainbow Warriors",
         "BYU": "BYU Cougars",
-        "Texas/NC State": "NC State Wolfpack",
+        "Texas": "Texas Longhorns",
+        "NC State": "NC State Wolfpack",
         "Gonzaga": "Gonzaga Bulldogs",
         "Kennesaw State": "Kennesaw St Owls",
         "Miami": "Miami Hurricanes",
@@ -66,7 +67,8 @@ const UnderdogTracker = () => {
         "Purdue": "Purdue Boilermakers",
         "Queens": "Queens University Royals",
         "Florida": "Florida Gators",
-        "Prairie View/Lehigh": "Prairie View Panthers",
+        "Prairie View": "Prairie View Panthers",
+        "Lehigh": "Lehigh Mountain Hawks",
         "Clemson": "Clemson Tigers",
         "Iowa": "Iowa Hawkeyes",
         "Vanderbilt": "Vanderbilt Commodores",
@@ -82,7 +84,8 @@ const UnderdogTracker = () => {
         "Houston": "Houston Cougars",
         "Idaho": "Idaho Vandals",
         "Michigan": "Michigan Wolverines",
-        "UMBC/Howard": "Howard Bison",
+        "Howard": "Howard Bison",
+        "UMBC": "UMBC Retrievers",
         "Georgia": "Georgia Bulldogs",
         "Saint Louis": "Saint Louis Billikens",
         "Texas Tech": "Texas Tech Red Raiders",
@@ -90,7 +93,8 @@ const UnderdogTracker = () => {
         "Alabama": "Alabama Crimson Tide",
         "Hofstra": "Hofstra Pride",
         "Tennessee": "Tennessee Volunteers",
-        "Miami (Ohio)/SMU": "SMU Mustangs",
+        "SMU": "SMU Mustangs",
+        "Miami (Ohio)": "Miami (OH) RedHawks",
         "Virginia": "Virginia Cavaliers",
         "Wright State": "Wright St Raiders",
         "Kentucky": "Kentucky Wildcats",
@@ -401,43 +405,39 @@ const UnderdogTracker = () => {
                                              className={`game-card completed ${game.isTossup ? 'tossup' : game.pickWon ? 'win' : 'loss'}`}>
                                             <div className="game-time">{game.startTime.toLocaleDateString()}</div>
                                             <div className="matchup">
-                                                <div
-                                                    className={`team ${game.winner === game.homeTeam ? 'winner' : ''}`}>
+                                                <div className={`team ${game.isTossup && game.winner === game.homeTeam ? 'tossup-winner' : !game.isTossup && game.winner === game.homeTeam ? 'winner' : ''}`}>
                                                     {game.homeTeam}
                                                     {isFavoriteMode
                                                         ? game.favorite === game.homeTeam && ' 👑'
                                                         : game.underdog === game.homeTeam && ' 🐶'}
                                                     <span className="team-odds">
-                                                        {formatOdds(game.homeTeam === game.favorite ? game.favoriteOdds : game.underdogOdds)}
-                                                    </span>
+                                        {formatOdds(game.homeTeam === game.favorite ? game.favoriteOdds : game.underdogOdds)}
+                                    </span>
                                                 </div>
                                                 <div className="vs">vs</div>
-                                                <div
-                                                    className={`team ${game.winner === game.awayTeam ? 'winner' : ''}`}>
+                                                <div className={`team ${game.isTossup && game.winner === game.awayTeam ? 'tossup-winner' : !game.isTossup && game.winner === game.awayTeam ? 'winner' : ''}`}>
                                                     {game.awayTeam}
                                                     {isFavoriteMode
                                                         ? game.favorite === game.awayTeam && ' 👑'
                                                         : game.underdog === game.awayTeam && ' 🐶'}
                                                     <span className="team-odds">
-                                                        {formatOdds(game.awayTeam === game.favorite ? game.favoriteOdds : game.underdogOdds)}
-                                                    </span>
+                                        {formatOdds(game.awayTeam === game.favorite ? game.favoriteOdds : game.underdogOdds)}
+                                    </span>
                                                 </div>
                                             </div>
                                             <div className="result">
                                                 <span>Result: </span>
-                                                <span
-                                                    className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
-                                                    {game.isTossup ? "Pick'em" : game.pickWon ? `${modeLabel} Won!` : `${modeLabel} Lost`}
-                                                </span>
+                                                <span className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
+                                    {game.isTossup ? "Pick'em" : game.pickWon ? `${modeLabel} Won!` : `${modeLabel} Lost`}
+                                </span>
                                             </div>
                                             <div className="bet-result">
                                                 <span>Bet Result: </span>
-                                                <span
-                                                    className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
-                                                    {game.isTossup ? '$0.00' : game.pickWon
-                                                        ? `+$${game.potentialProfit.toFixed(2)}`
-                                                        : `-$${betAmount.toFixed(2)}`}
-                                                </span>
+                                                <span className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
+                                    {game.isTossup ? '$0.00' : game.pickWon
+                                        ? `+$${game.potentialProfit.toFixed(2)}`
+                                        : `-$${betAmount.toFixed(2)}`}
+                                </span>
                                             </div>
                                         </div>
                                     ))}

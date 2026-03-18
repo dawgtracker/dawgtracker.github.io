@@ -453,6 +453,15 @@ h2 {
     font-size: 12px;
     opacity: 0.7;
 }
+.team.tossup-winner {
+    color: #c8b89a;
+    font-weight: 600;
+}
+.team.tossup-winner::after {
+    content: ' ✓';
+    font-size: 12px;
+    opacity: 0.7;
+}
 
 .odds, .potential-return, .result, .bet-result {
     display: flex;
