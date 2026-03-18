@@ -394,7 +394,7 @@ const UnderdogTracker = () => {
 
                 {showCompleted && (
                     <>
-                        <h2>Completed Games {filterByTeams ? '(March Madness)' : ''}</h2>
+                        <h2>Completed Games</h2>
                         {results.length === 0 ? (
                             <p className="empty-state">no completed games yet — check back after tip-off {modeEmoji}</p>
                         ) : (
@@ -446,7 +446,7 @@ const UnderdogTracker = () => {
                     </>
                 )}
 
-                <h2>Upcoming Games {filterByTeams ? '(March Madness)' : ''}</h2>
+                <h2>Upcoming Games</h2>
                 {upcomingGames.length === 0 ? (
                     <p>No upcoming games found for tournament teams.</p>
                 ) : (
