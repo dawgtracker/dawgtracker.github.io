@@ -9,14 +9,10 @@ const UnderdogTracker = () => {
     const [profitLoss, setProfitLoss] = useState(0);
     const [betAmount, setBetAmount] = useState(100);
     const [showCompleted, setShowCompleted] = useState(true);
-    const [availableSports, setAvailableSports] = useState([]);
-    const [lastUpdated, setLastUpdated] = useState('Unknown');
     const [sortMethod, setSortMethod] = useState('time');
     const [filterByTeams, setFilterByTeams] = useState(true);
     const [bettingMode, setBettingMode] = useState('underdog');
 
-    const SPORTS_CACHE_KEY = "underdogSportsCache";
-    const ODDS_CACHE_KEY = "underdogOddsCache";
     const CACHE_TIME_KEY = "underdogCacheTime";
     const COMPLETED_GAMES_CACHE_KEY = "underdogCompletedGamesCache";
 
@@ -28,116 +24,84 @@ const UnderdogTracker = () => {
     const getPickOdds = (game) => isFavoriteMode ? game.favoriteOdds : game.underdogOdds;
     const getPickWon = (game) => game.winner === getPickTeam(game);
 
-    const initialTeams = {
-        east: [
-            { seed: 1, name: "Duke", score: null },
-            { seed: 16, name: "Siena", score: null },
-            { seed: 8, name: "Ohio State", score: null },
-            { seed: 9, name: "TCU", score: null },
-            { seed: 5, name: "St. John's", score: null },
-            { seed: 12, name: "Northern Iowa", score: null },
-            { seed: 4, name: "Kansas", score: null },
-            { seed: 13, name: "Cal Baptist", score: null },
-            { seed: 6, name: "Louisville", score: null },
-            { seed: 11, name: "South Florida", score: null },
-            { seed: 3, name: "Michigan State", score: null },
-            { seed: 14, name: "North Dakota State", score: null },
-            { seed: 7, name: "UCLA", score: null },
-            { seed: 10, name: "UCF", score: null },
-            { seed: 2, name: "UConn", score: null },
-            { seed: 15, name: "Furman", score: null },
-        ],
-        west: [
-            { seed: 1, name: "Arizona", score: null },
-            { seed: 16, name: "Long Island", score: null },
-            { seed: 8, name: "Villanova", score: null },
-            { seed: 9, name: "Utah State", score: null },
-            { seed: 5, name: "Wisconsin", score: null },
-            { seed: 12, name: "High Point", score: null },
-            { seed: 4, name: "Arkansas", score: null },
-            { seed: 13, name: "Hawaii", score: null },
-            { seed: 6, name: "BYU", score: null },
-            { seed: 11, name: "Texas/NC State", score: null },
-            { seed: 3, name: "Gonzaga", score: null },
-            { seed: 14, name: "Kennesaw State", score: null },
-            { seed: 7, name: "Miami", score: null },
-            { seed: 10, name: "Missouri", score: null },
-            { seed: 2, name: "Purdue", score: null },
-            { seed: 15, name: "Queens", score: null },
-        ],
-        south: [
-            { seed: 1, name: "Florida", score: null },
-            { seed: 16, name: "Prairie View/Lehigh", score: null },
-            { seed: 8, name: "Clemson", score: null },
-            { seed: 9, name: "Iowa", score: null },
-            { seed: 5, name: "Vanderbilt", score: null },
-            { seed: 12, name: "McNeese", score: null },
-            { seed: 4, name: "Nebraska", score: null },
-            { seed: 13, name: "Troy", score: null },
-            { seed: 6, name: "North Carolina", score: null },
-            { seed: 11, name: "VCU", score: null },
-            { seed: 3, name: "Illinois", score: null },
-            { seed: 14, name: "Penn", score: null },
-            { seed: 7, name: "Saint Mary's", score: null },
-            { seed: 10, name: "Texas A&M", score: null },
-            { seed: 2, name: "Houston", score: null },
-            { seed: 15, name: "Idaho", score: null },
-        ],
-        midwest: [
-            { seed: 1, name: "Michigan", score: null },
-            { seed: 16, name: "UMBC/Howard", score: null },
-            { seed: 8, name: "Georgia", score: null },
-            { seed: 9, name: "Saint Louis", score: null },
-            { seed: 5, name: "Texas Tech", score: null },
-            { seed: 12, name: "Akron", score: null },
-            { seed: 4, name: "Alabama", score: null },
-            { seed: 13, name: "Hofstra", score: null },
-            { seed: 6, name: "Tennessee", score: null },
-            { seed: 11, name: "Miami (Ohio)/SMU", score: null },
-            { seed: 3, name: "Virginia", score: null },
-            { seed: 14, name: "Wright State", score: null },
-            { seed: 7, name: "Kentucky", score: null },
-            { seed: 10, name: "Santa Clara", score: null },
-            { seed: 2, name: "Iowa State", score: null },
-            { seed: 15, name: "Tennessee State", score: null },
-        ]
-    };
-
-    const getAllTeamNames = () => {
-        let allTeams = [];
-        Object.values(initialTeams).forEach(region => {
-            region.forEach(team => {
-                if (team.name.includes('/')) {
-                    const splitTeams = team.name.split('/');
-                    splitTeams.forEach(splitTeam => allTeams.push(splitTeam.trim()));
-                } else {
-                    allTeams.push(team.name);
-                }
-            });
-        });
-        return allTeams;
-    };
-
     const handleManualRefresh = () => {
-        localStorage.removeItem(SPORTS_CACHE_KEY);
-        localStorage.removeItem(ODDS_CACHE_KEY);
-        localStorage.removeItem(CACHE_TIME_KEY);
         setLoading(true);
         setError(null);
-        fetchSports();
+        fetchOddsForSport();
     };
 
-    const bracketTeams = getAllTeamNames();
+    const teamNameMap = {
+        "Duke": "Duke Blue Devils",
+        "Siena": "Siena Saints",
+        "Ohio State": "Ohio State Buckeyes",
+        "TCU": "TCU Horned Frogs",
+        "St. John's": "St. John's Red Storm",
+        "Northern Iowa": "Northern Iowa Panthers",
+        "Kansas": "Kansas Jayhawks",
+        "Cal Baptist": "Cal Baptist Lancers",
+        "Louisville": "Louisville Cardinals",
+        "South Florida": "South Florida Bulls",
+        "Michigan State": "Michigan St Spartans",
+        "North Dakota State": "North Dakota St Bison",
+        "UCLA": "UCLA Bruins",
+        "UCF": "UCF Knights",
+        "UConn": "UConn Huskies",
+        "Furman": "Furman Paladins",
+        "Arizona": "Arizona Wildcats",
+        "Long Island": "LIU Sharks",
+        "Villanova": "Villanova Wildcats",
+        "Utah State": "Utah State Aggies",
+        "Wisconsin": "Wisconsin Badgers",
+        "High Point": "High Point Panthers",
+        "Arkansas": "Arkansas Razorbacks",
+        "Hawaii": "Hawai'i Rainbow Warriors",
+        "BYU": "BYU Cougars",
+        "Texas/NC State": "NC State Wolfpack",
+        "Gonzaga": "Gonzaga Bulldogs",
+        "Kennesaw State": "Kennesaw St Owls",
+        "Miami": "Miami Hurricanes",
+        "Missouri": "Missouri Tigers",
+        "Purdue": "Purdue Boilermakers",
+        "Queens": "Queens University Royals",
+        "Florida": "Florida Gators",
+        "Prairie View/Lehigh": "Prairie View Panthers",
+        "Clemson": "Clemson Tigers",
+        "Iowa": "Iowa Hawkeyes",
+        "Vanderbilt": "Vanderbilt Commodores",
+        "McNeese": "McNeese Cowboys",
+        "Nebraska": "Nebraska Cornhuskers",
+        "Troy": "Troy Trojans",
+        "North Carolina": "North Carolina Tar Heels",
+        "VCU": "VCU Rams",
+        "Illinois": "Illinois Fighting Illini",
+        "Penn": "Pennsylvania Quakers",
+        "Saint Mary's": "Saint Mary's Gaels",
+        "Texas A&M": "Texas A&M Aggies",
+        "Houston": "Houston Cougars",
+        "Idaho": "Idaho Vandals",
+        "Michigan": "Michigan Wolverines",
+        "UMBC/Howard": "Howard Bison",
+        "Georgia": "Georgia Bulldogs",
+        "Saint Louis": "Saint Louis Billikens",
+        "Texas Tech": "Texas Tech Red Raiders",
+        "Akron": "Akron Zips",
+        "Alabama": "Alabama Crimson Tide",
+        "Hofstra": "Hofstra Pride",
+        "Tennessee": "Tennessee Volunteers",
+        "Miami (Ohio)/SMU": "SMU Mustangs",
+        "Virginia": "Virginia Cavaliers",
+        "Wright State": "Wright St Raiders",
+        "Kentucky": "Kentucky Wildcats",
+        "Santa Clara": "Santa Clara Broncos",
+        "Iowa State": "Iowa State Cyclones",
+        "Tennessee State": "Tennessee St Tigers",
+    };
+
+    const apiTeamNames = new Set(Object.values(teamNameMap));
 
     const involvesTournamentTeam = (game) => {
         if (!filterByTeams) return true;
-        const homeTeamMatch = bracketTeams.some(team =>
-            game.homeTeam?.includes(team) || team.includes(game.homeTeam)
-        );
-        const awayTeamMatch = bracketTeams.some(team =>
-            game.awayTeam?.includes(team) || team.includes(game.awayTeam)
-        );
-        return homeTeamMatch || awayTeamMatch;
+        return apiTeamNames.has(game.homeTeam) || apiTeamNames.has(game.awayTeam);
     };
 
     const sortGames = (games, method) => {
@@ -161,61 +125,12 @@ const UnderdogTracker = () => {
         return games;
     };
 
-    const shouldRefreshData = () => {
-        const cacheTime = localStorage.getItem(CACHE_TIME_KEY);
-        const today = new Date().toDateString();
-        return !cacheTime || cacheTime !== today;
-    };
-
     useEffect(() => {
-        fetchOddsForSport("basketball_ncaab");
-
-        const checkForRefresh = () => {
-            if (shouldRefreshData()) {
-                localStorage.removeItem(ODDS_CACHE_KEY);
-                localStorage.removeItem(CACHE_TIME_KEY);
-                fetchOddsForSport("basketball_ncaab");
-            }
-        };
-
-        const intervalId = setInterval(checkForRefresh, 600000);
-        return () => clearInterval(intervalId);
+        fetchOddsForSport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(() => {
-        const scheduleNextRefresh = () => {
-            const now = new Date();
-            const tomorrow = new Date();
-            tomorrow.setDate(now.getDate() + 1);
-            tomorrow.setHours(1, 30, 32, 0);
-            const timeUntilRefresh = tomorrow - now;
-
-            const timeoutId = setTimeout(() => {
-                localStorage.removeItem(SPORTS_CACHE_KEY);
-                localStorage.removeItem(ODDS_CACHE_KEY);
-                localStorage.removeItem(CACHE_TIME_KEY);
-                fetchSports();
-                scheduleNextRefresh();
-            }, timeUntilRefresh);
-
-            return timeoutId;
-        };
-
-        const timeoutId = scheduleNextRefresh();
-        return () => clearTimeout(timeoutId);
-    }, []);
-
-    const processCachedOdds = (oddsData) => {
-        const processedGames = processGamesData(oddsData);
-        setGames(processedGames);
-        setLoading(false);
-    };
-
-    const fetchSports = async () => {
-        fetchOddsForSport("basketball_ncaab");
-    };
-
-    const fetchOddsForSport = async (sportKey) => {
+    const fetchOddsForSport = async () => {
         try {
             setLoading(true);
             const response = await fetch('/odds.json');
@@ -231,11 +146,6 @@ const UnderdogTracker = () => {
             );
             const mergedCompletedGames = [...cachedCompletedGames, ...newCompletedGames];
             localStorage.setItem(COMPLETED_GAMES_CACHE_KEY, JSON.stringify(mergedCompletedGames));
-            localStorage.setItem(ODDS_CACHE_KEY, JSON.stringify(oddsData));
-
-            const currentDate = new Date().toDateString();
-            localStorage.setItem(CACHE_TIME_KEY, currentDate);
-            setLastUpdated(currentDate);
 
             const processedGames = processGamesData(oddsData);
             setGames(processedGames);
@@ -332,6 +242,7 @@ const UnderdogTracker = () => {
         setResults(bettingResults);
         const totalProfitLoss = bettingResults.reduce((sum, game) => sum + game.potentialProfit, 0);
         setProfitLoss(totalProfitLoss);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [games, betAmount, filterByTeams, bettingMode]);
 
     const formatOdds = (odds) => {
@@ -348,7 +259,6 @@ const UnderdogTracker = () => {
     if (error) return (
         <div className="error">
             <p>{error}</p>
-            <p>Available sports: {(availableSports || []).map(s => s.key).join(', ')}</p>
             <button onClick={handleManualRefresh}>Try fetching general basketball odds instead</button>
         </div>
     );
@@ -468,21 +378,30 @@ const UnderdogTracker = () => {
                             <div className="games-list">
                                 {sortGames(results, sortMethod === 'profit' ? 'profit' : 'timeDesc')
                                     .map(game => (
-                                        <div key={game.id} className={`game-card completed ${game.pickWon ? 'win' : 'loss'}`}>
+                                        <div key={game.id}
+                                             className={`game-card completed ${game.pickWon ? 'win' : 'loss'}`}>
                                             <div className="game-time">{game.startTime.toLocaleDateString()}</div>
                                             <div className="matchup">
-                                                <div className={`team ${game.winner === game.homeTeam ? 'winner' : ''}`}>
+                                                <div
+                                                    className={`team ${game.winner === game.homeTeam ? 'winner' : ''}`}>
                                                     {game.homeTeam}
                                                     {isFavoriteMode
                                                         ? game.favorite === game.homeTeam && ' 👑'
                                                         : game.underdog === game.homeTeam && ' 🐶'}
+                                                    <span className="team-odds">
+                                                        {formatOdds(game.homeTeam === game.favorite ? game.favoriteOdds : game.underdogOdds)}
+                                                    </span>
                                                 </div>
                                                 <div className="vs">vs</div>
-                                                <div className={`team ${game.winner === game.awayTeam ? 'winner' : ''}`}>
+                                                <div
+                                                    className={`team ${game.winner === game.awayTeam ? 'winner' : ''}`}>
                                                     {game.awayTeam}
                                                     {isFavoriteMode
                                                         ? game.favorite === game.awayTeam && ' 👑'
                                                         : game.underdog === game.awayTeam && ' 🐶'}
+                                                    <span className="team-odds">
+                                                        {formatOdds(game.awayTeam === game.favorite ? game.favoriteOdds : game.underdogOdds)}
+                                                    </span>
                                                 </div>
                                             </div>
                                             <div className="result">
