@@ -1,21 +1,205 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import './dawg.css'
 
+// ─── About Page ──────────────────────────────────────────────────────────────
+const AboutPage = () => (
+    <div className="page-content about-page">
+        <div className="about-hero">
+            <h1 className="about-title">dawg <span>🐶</span></h1>
+            <p className="about-subtitle">a march madness betting tracker built on one simple idea:</p>
+            <p className="about-tagline">always bet the underdog.</p>
+        </div>
+
+        <div className="about-cards">
+
+            <div className="about-card">
+                <div className="about-card-icon">🐶</div>
+                <h3>The Strategy</h3>
+                <p>
+                    The underdog strategy is simple: upsets happen more than oddsmakers expect,
+                    and the payout on a surprise win can offset multiple losses. March Madness is
+                    historically the best tournament for upsets - dawg tracks whether that theory holds up
+                    in real money terms.
+                </p>
+            </div>
+
+            <div className="about-card">
+                <div className="about-card-icon">📊</div>
+                <h3>How It Works</h3>
+                <p>
+                    dawg pulls live odds from sportsbooks and identifies the underdog in every March Madness matchup -
+                    the team with the higher (positive) moneyline odds. You pick a flat bet amount, and we track
+                    what would happen if you blindly backed the dog (or the favorite) every single game.
+                </p>
+            </div>
+
+            <div className="about-card">
+                <div className="about-card-icon">👑</div>
+                <h3>Favorite Mode</h3>
+                <p>
+                    Flip to <strong>favorite mode</strong> to see the other side of the coin - betting the expected
+                    winner every game. Higher win rate, lower payouts. Compare both strategies over the
+                    tournament to see which one actually makes money.
+                </p>
+            </div>
+
+            <div className="about-card">
+                <div className="about-card-icon">💸</div>
+                <h3>Reading the Odds</h3>
+                <p>
+                    American odds tell you profit on a $100 bet. <strong>+200</strong> means bet $100, win $200 profit.
+                    <strong> -150</strong> means bet $150 to win $100 profit. Underdogs always carry
+                    a <strong>+</strong> line;
+                    favorites carry a <strong>−</strong> line. Pick'em games (equal odds) are tracked separately and
+                    don't count toward P/L.
+                </p>
+            </div>
+        </div>
+
+        <div className="about-disclaimer">
+            <p>⚠️ dawg is for entertainment and educational purposes only. no real money is involved. gamble
+                responsibly.</p>
+        </div>
+    </div>
+);
+
+// ─── Stats / History Page ─────────────────────────────────────────────────────
+const StatsPage = ({results, tossupGames, betAmount, bettingMode}) => {
+    const isFavoriteMode = bettingMode === 'favorite';
+    const modeLabel = isFavoriteMode ? 'Favorite' : 'Underdog';
+
+    const wins = results.filter(g => g.pickWon).length;
+    const losses = results.filter(g => !g.pickWon).length;
+    const totalBets = results.length;
+    const winRate = totalBets > 0 ? (wins / totalBets * 100) : 0;
+    const totalPL = results.reduce((sum, g) => sum + g.potentialProfit, 0);
+    const roi = totalBets > 0 ? (totalPL / (betAmount * totalBets) * 100) : 0;
+    const biggestWin = results.filter(g => g.pickWon).sort((a, b) => b.potentialProfit - a.potentialProfit)[0];
+    const biggestLoss = results.filter(g => !g.pickWon).sort((a, b) => a.potentialProfit - b.potentialProfit)[0];
+
+    let running = 0;
+    const runningPL = results
+        .slice()
+        .sort((a, b) => a.startTime - b.startTime)
+        .map(g => { running += g.potentialProfit; return running; });
+
+    const maxAbs = Math.max(...runningPL.map(Math.abs), 1);
+    const svgH = 80, svgW = 300, pad = 10;
+    const pts = runningPL.map((v, i) => {
+        const x = pad + (i / Math.max(runningPL.length - 1, 1)) * (svgW - pad * 2);
+        const y = svgH / 2 - (v / maxAbs) * (svgH / 2 - pad);
+        return `${x},${y}`;
+    }).join(' ');
+
+    return (
+        <div className="page-content stats-page">
+            <h2 className="stats-title"> {modeLabel} Stats</h2>
+
+            <div className="stats-grid">
+                <div className="stat-tile">
+                    <span className="stat-tile-value">${betAmount}</span>
+                    <span className="stat-tile-label">Bet Size</span>
+                </div>
+                <div className="stat-tile">
+                    <span className="stat-tile-value">{totalBets}</span>
+                    <span className="stat-tile-label">Total Bets</span>
+                </div>
+                <div className="stat-tile">
+                    <span className="stat-tile-value">{wins}</span>
+                    <span className="stat-tile-label">Wins</span>
+                </div>
+                <div className="stat-tile">
+                    <span className="stat-tile-value">{losses}</span>
+                    <span className="stat-tile-label">Losses</span>
+                </div>
+                <div className="stat-tile">
+                    <span className="stat-tile-value">{tossupGames.length}</span>
+                    <span className="stat-tile-label">Pick'ems</span>
+                </div>
+                <div className={`stat-tile ${winRate >= 50 ? 'positive' : 'negative'}`}>
+                    <span className="stat-tile-value">{totalBets > 0 ? `${winRate.toFixed(1)}%` : '—'}</span>
+                    <span className="stat-tile-label">Win Rate</span>
+                </div>
+                <div className={`stat-tile ${totalPL > 0 ? 'positive' : totalPL < 0 ? 'negative' : ''}`}>
+                    <span
+                        className="stat-tile-value">{totalBets > 0 ? `${totalPL >= 0 ? '+' : ''}$${totalPL.toFixed(2)}` : '—'}</span>
+                    <span className="stat-tile-label">P / L</span>
+                </div>
+                <div className={`stat-tile ${roi > 0 ? 'positive' : roi < 0 ? 'negative' : ''}`}>
+                    <span
+                        className="stat-tile-value">{totalBets > 0 ? `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%` : '—'}</span>
+                    <span className="stat-tile-label">ROI</span>
+                </div>
+            </div>
+
+            {runningPL.length > 1 && (
+                <div className="sparkline-card">
+                    <h3>Running P/L</h3>
+                    <svg viewBox={`0 0 ${svgW} ${svgH}`} className="sparkline">
+                        <line x1={pad} y1={svgH / 2} x2={svgW - pad} y2={svgH / 2} stroke="var(--border)"
+                              strokeWidth="1" strokeDasharray="4,4"/>
+                        <polyline
+                            points={pts}
+                            fill="none"
+                            stroke={totalPL >= 0 ? 'var(--green)' : 'var(--red)'}
+                            strokeWidth="2.5"
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                        />
+                    </svg>
+                    <div className="sparkline-labels">
+                        <span>Game 1</span>
+                        <span>Game {runningPL.length}</span>
+                    </div>
+                </div>
+            )}
+
+            <div className="highlights-row">
+                {biggestWin && (
+                    <div className="highlight-card win">
+                        <div className="highlight-label">💰 Biggest Win</div>
+                        <div className="highlight-teams">{biggestWin.homeTeam} vs {biggestWin.awayTeam}</div>
+                        <div className="highlight-amount">+${biggestWin.potentialProfit.toFixed(2)}</div>
+                        <div className="highlight-date">{biggestWin.startTime.toLocaleDateString()}</div>
+                    </div>
+                )}
+                {biggestLoss && (
+                    <div className="highlight-card loss">
+                        <div className="highlight-label">📉 Biggest Loss</div>
+                        <div className="highlight-teams">{biggestLoss.homeTeam} vs {biggestLoss.awayTeam}</div>
+                        <div className="highlight-amount">-${betAmount.toFixed(2)}</div>
+                        <div className="highlight-date">{biggestLoss.startTime.toLocaleDateString()}</div>
+                    </div>
+                )}
+            </div>
+
+            {totalBets === 0 && (
+                <p className="empty-state">no results yet — check back after some games complete 🐶</p>
+            )}
+            <div className="about-disclaimer">
+                <p>⚠️ dawg is for entertainment and educational purposes only. no real money is involved. gamble
+                    responsibly.</p>
+            </div>
+        </div>
+    );
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 const UnderdogTracker = () => {
     const [games, setGames] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [results, setResults] = useState([]);
     const [profitLoss, setProfitLoss] = useState(0);
-    const [betAmount, setBetAmount] = useState(100);
+    const [betAmount, setBetAmount] = useState(10);
     const [showCompleted, setShowCompleted] = useState(true);
     const [sortMethod, setSortMethod] = useState('time');
-    const [filterByTeams, setFilterByTeams] = useState(true);
+    const [filterByTeams] = useState(true);
     const [bettingMode, setBettingMode] = useState('underdog');
     const [tossupGames, setTossupGames] = useState([]);
     const [completedGamesData, setCompletedGamesData] = useState([]);
+    const [activePage, setActivePage] = useState('home');
 
-    const CACHE_TIME_KEY = "underdogCacheTime";
     const COMPLETED_GAMES_CACHE_KEY = "underdogCompletedGamesCache";
 
     const isFavoriteMode = bettingMode === 'favorite';
@@ -133,7 +317,7 @@ const UnderdogTracker = () => {
 
     useEffect(() => {
         fetchOddsForSport();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchOddsForSport = async () => {
@@ -210,9 +394,7 @@ const UnderdogTracker = () => {
     };
 
     useEffect(() => {
-        const cachedCompletedGames = completedGamesData;
-
-        const cachedProcessedGames = cachedCompletedGames.map(game => {
+        const cachedProcessedGames = completedGamesData.map(game => {
             const originalOddsKey = `original_odds_${game.id}`;
             const originalOdds = JSON.parse(localStorage.getItem(originalOddsKey) || '{}');
             const isTossup = originalOdds.underdogOdds === originalOdds.favoriteOdds;
@@ -265,7 +447,7 @@ const UnderdogTracker = () => {
         setResults(bettingResults);
         const totalProfitLoss = bettingResults.reduce((sum, game) => sum + game.potentialProfit, 0);
         setProfitLoss(totalProfitLoss);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [games, betAmount, filterByTeams, bettingMode, completedGamesData]);
 
     const formatOdds = (odds) => {
@@ -291,23 +473,6 @@ const UnderdogTracker = () => {
         sortMethod
     );
 
-    if (upcomingGames.length === 0 && results.length === 0) {
-        return (
-            <div className="underdog-tracker">
-                <h1>dawg</h1>
-                <div className="error">
-                    <p>No tournament games data available.</p>
-                    <div className="settings">
-                        <label>
-                            <input type="checkbox" checked={filterByTeams} onChange={() => setFilterByTeams(!filterByTeams)} />
-                            Filter by March Madness
-                        </label>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="underdog-tracker">
             <nav className="strategy-navbar">
@@ -319,190 +484,223 @@ const UnderdogTracker = () => {
                         <div className="ticker-track">
                             <div className="stats-wrapper">
                                 <div className="stat"><span>Bets:&nbsp; {results.length}</span></div>
-                                <div className="stat"><span>Wins:&nbsp; {results.filter(g => g.pickWon).length}</span>
-                                </div>
+                                <div className="stat"><span>Wins:&nbsp; {results.filter(g => g.pickWon).length}</span></div>
                                 <div className="stat">
                                     <span>Win Rate:&nbsp; {results.length > 0 ? `${(results.filter(g => g.pickWon).length / results.length * 100).toFixed(1)}%` : "N/A"}</span>
                                 </div>
-                                <div className="stat"><span>P/L:&nbsp; <span
-                                    className={profitLoss > 0 ? 'positive-pl' : profitLoss < 0 ? 'negative-pl' : ''}>${profitLoss.toFixed(2)}</span></span>
-                                </div>
-                                <div className="stat"><span>ROI:&nbsp; <span
-                                    className={results.length > 0 ? (profitLoss / (betAmount * results.length) * 100 < 0 ? 'negative-roi' : 'positive-roi') : ''}>{results.length > 0 ? `${(profitLoss / (betAmount * results.length) * 100).toFixed(1)}%` : "N/A"}</span></span>
-                                </div>
+                                <div className="stat"><span>P/L:&nbsp; <span className={profitLoss > 0 ? 'positive-pl' : profitLoss < 0 ? 'negative-pl' : ''}>${profitLoss.toFixed(2)}</span></span></div>
+                                <div className="stat"><span>ROI:&nbsp; <span className={results.length > 0 ? (profitLoss / (betAmount * results.length) * 100 < 0 ? 'negative-roi' : 'positive-roi') : ''}>{results.length > 0 ? `${(profitLoss / (betAmount * results.length) * 100).toFixed(1)}%` : "N/A"}</span></span></div>
                             </div>
                             <div className="stats-wrapper stats-wrapper2">
                                 <div className="stat"></div>
                                 <div className="stat"><span>Bets:&nbsp; {results.length}</span></div>
-                                <div className="stat"><span>Wins:&nbsp; {results.filter(g => g.pickWon).length}</span>
-                                </div>
+                                <div className="stat"><span>Wins:&nbsp; {results.filter(g => g.pickWon).length}</span></div>
                                 <div className="stat">
                                     <span>Win Rate:&nbsp; {results.length > 0 ? `${(results.filter(g => g.pickWon).length / results.length * 100).toFixed(1)}%` : "N/A"}</span>
                                 </div>
-                                <div className="stat"><span>P/L:&nbsp; <span
-                                    className={profitLoss > 0 ? 'positive-pl' : profitLoss < 0 ? 'negative-pl' : ''}>${profitLoss.toFixed(2)}</span></span>
-                                </div>
-                                <div className="stat"><span>ROI:&nbsp; <span
-                                    className={results.length > 0 ? (profitLoss / (betAmount * results.length) * 100 < 0 ? 'negative-roi' : 'positive-roi') : ''}>{results.length > 0 ? `${(profitLoss / (betAmount * results.length) * 100).toFixed(1)}%` : "N/A"}</span></span>
-                                </div>
+                                <div className="stat"><span>P/L:&nbsp; <span className={profitLoss > 0 ? 'positive-pl' : profitLoss < 0 ? 'negative-pl' : ''}>${profitLoss.toFixed(2)}</span></span></div>
+                                <div className="stat"><span>ROI:&nbsp; <span className={results.length > 0 ? (profitLoss / (betAmount * results.length) * 100 < 0 ? 'negative-roi' : 'positive-roi') : ''}>{results.length > 0 ? `${(profitLoss / (betAmount * results.length) * 100).toFixed(1)}%` : "N/A"}</span></span></div>
                             </div>
                         </div>
                     </div>
-                    <div className="data-info">
-                        <span>Updated: {localStorage.getItem(CACHE_TIME_KEY) ? `${localStorage.getItem(CACHE_TIME_KEY)} 1:30 AM` : 'Unknown'}</span>
+
+                    <div className="nav-tabs">
+                        <button
+                            className={`nav-tab ${activePage === 'home' ? 'nav-tab--active' : ''}`}
+                            onClick={() => setActivePage('home')}
+                        >
+                            Games
+                        </button>
+                        <button
+                            className={`nav-tab ${activePage === 'stats' ? 'nav-tab--active' : ''}`}
+                            onClick={() => setActivePage('stats')}
+                        >
+                            Stats
+                        </button>
+                        <button
+                            className={`nav-tab ${activePage === 'about' ? 'nav-tab--active' : ''}`}
+                            onClick={() => setActivePage('about')}
+                        >
+                            About
+                        </button>
                     </div>
                 </div>
             </nav>
 
-            <div className="main-content">
-                <div className="settings">
-                    <div className="settings-left">
-                        <label>
-                            Bet Amount: $
-                            <input
-                                type="number"
-                                value={betAmount}
-                                onChange={(e) => setBetAmount(Number(e.target.value))}
-                                min="1"
-                            />
-                        </label>
-                        <label>
-                            <input type="checkbox" checked={showCompleted}
-                                   onChange={() => setShowCompleted(!showCompleted)}/>
-                            Show Completed Games
-                        </label>
+            {activePage === 'about' && <AboutPage />}
+
+            {activePage === 'stats' && (
+                <StatsPage
+                    results={results}
+                    tossupGames={tossupGames}
+                    betAmount={betAmount}
+                    bettingMode={bettingMode}
+                />
+            )}
+
+            {activePage === 'home' && (
+                <div className="main-content">
+                    <div className="settings">
+                        <div className="settings-left">
+                            <label>
+                                Bet Amount: $
+                                <input
+                                    type="number"
+                                    value={betAmount}
+                                    onChange={(e) => setBetAmount(Number(e.target.value))}
+                                    min="1"
+                                />
+                            </label>
+                            <label>
+                                <input type="checkbox" checked={showCompleted}
+                                       onChange={() => setShowCompleted(!showCompleted)}/>
+                                Show Completed Games
+                            </label>
+                        </div>
+                        <button
+                            className={`mode-switch-small ${isFavoriteMode ? 'mode-switch-small--favorite' : 'mode-switch-small--underdog'}`}
+                            onClick={() => setBettingMode(prev => prev === 'underdog' ? 'favorite' : 'underdog')}
+                            title={`Switch to ${isFavoriteMode ? 'underdog' : 'favorite'} mode`}
+                        >
+                            <span className="mode-switch-small-thumb"/>
+                            <span className="mode-switch-small-label">{isFavoriteMode ? '👑 fav' : '🐶 dog'}</span>
+                        </button>
                     </div>
-                    <button
-                        className={`mode-switch-small ${isFavoriteMode ? 'mode-switch-small--favorite' : 'mode-switch-small--underdog'}`}
-                        onClick={() => setBettingMode(prev => prev === 'underdog' ? 'favorite' : 'underdog')}
-                        title={`Switch to ${isFavoriteMode ? 'underdog' : 'favorite'} mode`}
-                    >
-                        <span className="mode-switch-small-thumb"/>
-                        <span className="mode-switch-small-label">{isFavoriteMode ? '👑 fav' : '🐶 dog'}</span>
-                    </button>
-                </div>
 
-                <div className="sort-options">
-                    <label htmlFor="sort-select">Sort by: </label>
-                    <select id="sort-select" value={sortMethod} onChange={(e) => setSortMethod(e.target.value)}>
-                        <option value="time">Earliest Games</option>
-                        <option value="timeDesc">Latest Games</option>
-                        <option value="profit">Highest Profit</option>
-                        <option value="profitDesc">Lowest Profit</option>
-                    </select>
-                </div>
+                    <div className="sort-options">
+                        <label htmlFor="sort-select">Sort by: </label>
+                        <select id="sort-select" value={sortMethod} onChange={(e) => setSortMethod(e.target.value)}>
+                            <option value="time">Earliest Games</option>
+                            <option value="timeDesc">Latest Games</option>
+                            <option value="profit">Highest Profit</option>
+                            <option value="profitDesc">Lowest Profit</option>
+                        </select>
+                    </div>
 
-                {showCompleted && (
-                    <>
-                        <h2>Completed Games</h2>
-                        {results.length === 0 ? (
-                            <p className="empty-state">no completed games yet — check back after tip-off {modeEmoji}</p>
-                        ) : (
-                            <div className="games-list">
-                                {sortGames([...results, ...tossupGames], sortMethod === 'profit' ? 'profit' : 'timeDesc')
-                                    .map(game => (
-                                        <div key={game.id}
-                                             className={`game-card completed ${game.isTossup ? 'tossup' : game.pickWon ? 'win' : 'loss'}`}>
-                                            <div className="game-time">{game.startTime.toLocaleDateString()}</div>
-                                            <div className="matchup">
-                                                <div className={`team ${game.isTossup && game.winner === game.homeTeam ? 'tossup-winner' : !game.isTossup && game.winner === game.homeTeam ? 'winner' : ''}`}>
-                                                    {game.homeTeam}
-                                                    {!game.isTossup && (isFavoriteMode
-                                                        ? game.favorite === game.homeTeam && ' 👑'
-                                                        : game.underdog === game.homeTeam && ' 🐶')}
-                                                    <span className="team-odds">
-                                        {formatOdds(game.homeTeam === game.favorite ? game.favoriteOdds : game.underdogOdds)}
-                                    </span>
+                    {showCompleted && (
+                        <>
+                            <h2>Completed Games</h2>
+                            {results.length === 0 ? (
+                                <p className="empty-state">no completed games yet — check back after
+                                    tip-off {modeEmoji}</p>
+                            ) : (
+                                <div className="games-list">
+                                    {sortGames([...results, ...tossupGames], sortMethod === 'profit' ? 'profit' : 'timeDesc')
+                                        .map(game => (
+                                            <div key={game.id}
+                                                 className={`game-card completed ${game.isTossup ? 'tossup' : game.pickWon ? 'win' : 'loss'}`}>
+                                                <div className="game-time">{game.startTime.toLocaleDateString()}</div>
+                                                <div className="matchup">
+                                                    <div
+                                                        className={`team ${game.isTossup && game.winner === game.homeTeam ? 'tossup-winner' : !game.isTossup && game.winner === game.homeTeam ? 'winner' : ''}`}>
+                                                        {game.homeTeam}
+                                                        {!game.isTossup && (isFavoriteMode
+                                                            ? game.favorite === game.homeTeam && ' 👑'
+                                                            : game.underdog === game.homeTeam && ' 🐶')}
+                                                        <span className="team-odds">
+                                                            {formatOdds(game.homeTeam === game.favorite ? game.favoriteOdds : game.underdogOdds)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="vs">vs</div>
+                                                    <div
+                                                        className={`team ${game.isTossup && game.winner === game.awayTeam ? 'tossup-winner' : !game.isTossup && game.winner === game.awayTeam ? 'winner' : ''}`}>
+                                                        {game.awayTeam}
+                                                        {!game.isTossup && (isFavoriteMode
+                                                            ? game.favorite === game.awayTeam && ' 👑'
+                                                            : game.underdog === game.awayTeam && ' 🐶')}
+                                                        <span className="team-odds">
+                                                            {formatOdds(game.awayTeam === game.favorite ? game.favoriteOdds : game.underdogOdds)}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div className="vs">vs</div>
-                                                <div className={`team ${game.isTossup && game.winner === game.awayTeam ? 'tossup-winner' : !game.isTossup && game.winner === game.awayTeam ? 'winner' : ''}`}>
-                                                    {game.awayTeam}
-                                                    {!game.isTossup && (isFavoriteMode
-                                                        ? game.favorite === game.awayTeam && ' 👑'
-                                                        : game.underdog === game.awayTeam && ' 🐶')}
-                                                    <span className="team-odds">
-                                        {formatOdds(game.awayTeam === game.favorite ? game.favoriteOdds : game.underdogOdds)}
-                                    </span>
+                                                <div className="result">
+                                                    <span>Result: </span>
+                                                    <span
+                                                        className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
+                                                        {game.isTossup ? "Pick'em" : game.pickWon ? `${modeLabel} Won!` : `${modeLabel} Lost`}
+                                                    </span>
+                                                </div>
+                                                <div className="bet-result">
+                                                    <span>Bet Result: </span>
+                                                    <span
+                                                        className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
+                                                        {game.isTossup ? '$0.00' : game.pickWon
+                                                            ? `+$${game.potentialProfit.toFixed(2)}`
+                                                            : `-$${betAmount.toFixed(2)}`}
+                                                    </span>
                                                 </div>
                                             </div>
-                                            <div className="result">
-                                                <span>Result: </span>
-                                                <span className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
-                                    {game.isTossup ? "Pick'em" : game.pickWon ? `${modeLabel} Won!` : `${modeLabel} Lost`}
-                                </span>
-                                            </div>
-                                            <div className="bet-result">
-                                                <span>Bet Result: </span>
-                                                <span className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
-                                    {game.isTossup ? '$0.00' : game.pickWon
-                                        ? `+$${game.potentialProfit.toFixed(2)}`
-                                        : `-$${betAmount.toFixed(2)}`}
-                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
-                            </div>
-                        )}
-                    </>
-                )}
-
-                <h2>Upcoming Games</h2>
-                {upcomingGames.length === 0 ? (
-                    <p>No upcoming games found for tournament teams.</p>
-                ) : (
-                    <div className="games-list">
-                        {upcomingGames.map(game => {
-                            const pickTeam = getPickTeam(game);
-                            const pickOdds = getPickOdds(game);
-                            const otherOdds = isFavoriteMode ? game.underdogOdds : game.favoriteOdds;
-                            const otherLabel = isFavoriteMode ? 'Underdog' : 'Favorite';
-
-                            return (
-                                <div key={game.id} className="game-card">
-                                    <div className="game-time">
-                                        {game.startTime.toLocaleDateString()} {game.startTime.toLocaleTimeString()}
-                                    </div>
-                                    <div className="matchup">
-                                        <div className={`team ${pickTeam === game.homeTeam ? (isFavoriteMode ? 'favorite' : 'underdog') : (isFavoriteMode ? 'underdog' : 'favorite')}`}>
-                                            {game.homeTeam}
-                                            {isFavoriteMode
-                                                ? game.favorite === game.homeTeam && ' 👑'
-                                                : game.underdog === game.homeTeam && ' 🐶'}
-                                        </div>
-                                        <div className="vs">vs</div>
-                                        <div className={`team ${pickTeam === game.awayTeam ? (isFavoriteMode ? 'favorite' : 'underdog') : (isFavoriteMode ? 'underdog' : 'favorite')}`}>
-                                            {game.awayTeam}
-                                            {isFavoriteMode
-                                                ? game.favorite === game.awayTeam && ' 👑'
-                                                : game.underdog === game.awayTeam && ' 🐶'}
-                                        </div>
-                                    </div>
-                                    <div className="odds">
-                                        <div>
-                                            <span>{modeLabel}: </span>
-                                            <span className={isFavoriteMode ? 'favorite-odds' : 'underdog-odds'}>
-                                                {formatOdds(pickOdds)}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <span>{otherLabel}: </span>
-                                            <span className={isFavoriteMode ? 'underdog-odds' : 'favorite-odds'}>
-                                                {formatOdds(otherOdds)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="potential-return">
-                                        <span>Potential Profit on {modeLabel}: </span>
-                                        <span className="profit">
-                                            ${calculatePotentialProfit(pickOdds, betAmount).toFixed(2)}
-                                        </span>
-                                    </div>
+                                        ))}
                                 </div>
-                            );
-                        })}
+                            )}
+                        </>
+                    )}
+
+                    <h2>Upcoming Games</h2>
+                    {upcomingGames.length === 0 ? (
+                        <p>No upcoming games found for tournament teams.</p>
+                    ) : (
+                        <div className="games-list">
+                            {upcomingGames.map(game => {
+                                const pickTeam = getPickTeam(game);
+                                const pickOdds = getPickOdds(game);
+                                const otherOdds = isFavoriteMode ? game.underdogOdds : game.favoriteOdds;
+                                const otherLabel = isFavoriteMode ? 'Underdog' : 'Favorite';
+
+                                return (
+                                    <div key={game.id} className="game-card">
+                                        <div className="game-time">
+                                            {game.startTime.toLocaleDateString()} {game.startTime.toLocaleTimeString()}
+                                        </div>
+                                        <div className="matchup">
+                                            <div
+                                                className={`team ${pickTeam === game.homeTeam ? (isFavoriteMode ? 'favorite' : 'underdog') : (isFavoriteMode ? 'underdog' : 'favorite')}`}>
+                                                {game.homeTeam}
+                                                {isFavoriteMode
+                                                    ? game.favorite === game.homeTeam && ' 👑'
+                                                    : game.underdog === game.homeTeam && ' 🐶'}
+                                            </div>
+                                            <div className="vs">vs</div>
+                                            <div
+                                                className={`team ${pickTeam === game.awayTeam ? (isFavoriteMode ? 'favorite' : 'underdog') : (isFavoriteMode ? 'underdog' : 'favorite')}`}>
+                                                {game.awayTeam}
+                                                {isFavoriteMode
+                                                    ? game.favorite === game.awayTeam && ' 👑'
+                                                    : game.underdog === game.awayTeam && ' 🐶'}
+                                            </div>
+                                        </div>
+                                        <div className="odds">
+                                            <div>
+                                                <span>{modeLabel}: </span>
+                                                <span className={isFavoriteMode ? 'favorite-odds' : 'underdog-odds'}>
+                                                    {formatOdds(pickOdds)}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span>{otherLabel}: </span>
+                                                <span className={isFavoriteMode ? 'underdog-odds' : 'favorite-odds'}>
+                                                    {formatOdds(otherOdds)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="potential-return">
+                                            <span>Potential Profit on {modeLabel}: </span>
+                                            <span className="profit">
+                                                ${calculatePotentialProfit(pickOdds, betAmount).toFixed(2)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                    <div className="about-disclaimer">
+                        <p>⚠️ dawg is for entertainment and educational purposes only. no real money is involved.
+                            gamble
+                            responsibly.</p>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 };

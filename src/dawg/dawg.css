@@ -51,6 +51,7 @@ body {
     font-family: 'DM Sans', 'Helvetica Neue', sans-serif;
 }
 
+/* ── Navbar ── */
 .strategy-navbar {
     position: fixed;
     top: 0;
@@ -88,6 +89,7 @@ body {
     letter-spacing: -0.01em;
 }
 
+/* ── Ticker ── */
 .stats-navbar {
     overflow: hidden;
     position: relative;
@@ -143,15 +145,46 @@ body {
 .stats-navbar .stat.loss   { color: var(--loss-red-soft); }
 .positive-roi { color: var(--win-green-soft); }
 .negative-roi { color: var(--loss-red-soft); }
+.positive-pl  { color: var(--win-green-soft); }
+.negative-pl  { color: var(--loss-red-soft); }
 
-.data-info {
-    font-size: 11px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    letter-spacing: 0.02em;
+/* ── Nav Tabs (replaces .data-info) ── */
+.nav-tabs {
+    display: flex;
+    gap: 4px;
+    align-items: center;
     flex-shrink: 0;
 }
 
+.nav-tab {
+    background: transparent;
+    border: 1px solid var(--border-medium);
+    color: var(--text-muted);
+    padding: 5px 12px;
+    border-radius: var(--radius-md);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.nav-tab:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border-color: rgba(255,255,255,0.18);
+}
+
+.nav-tab--active {
+    background: var(--bg-elevated);
+    border-color: var(--accent-heading);
+    color: var(--accent-heading);
+    font-weight: 700;
+}
+
+/* ── Main layout ── */
 .underdog-tracker {
     max-width: 1200px;
     margin: 0 auto;
@@ -183,6 +216,7 @@ h2 {
     margin: 40px 0 24px;
 }
 
+/* ── Settings bar ── */
 .settings {
     background-color: var(--bg-secondary);
     border: 1px solid rgba(201, 169, 110, 0.18);
@@ -236,6 +270,7 @@ h2 {
     cursor: pointer;
 }
 
+/* ── Sort options ── */
 .sort-options {
     display: flex;
     align-items: center;
@@ -275,6 +310,7 @@ h2 {
     border-color: var(--accent-sort);
 }
 
+/* ── Stat card ── */
 .stat-card {
     display: flex;
     justify-content: space-between;
@@ -291,12 +327,7 @@ h2 {
     flex: 1;
 }
 
-.settings {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
+/* ── Mode switch ── */
 .mode-switch-small {
     display: flex;
     align-items: center;
@@ -369,6 +400,7 @@ h2 {
 .profit { color: var(--win-green-soft) !important; }
 .loss   { color: var(--loss-red-soft) !important; }
 
+/* ── Game cards ── */
 .games-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -463,6 +495,13 @@ h2 {
     opacity: 0.7;
 }
 
+.team-odds {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: 6px;
+    font-weight: 400;
+}
+
 .odds, .potential-return, .result, .bet-result {
     display: flex;
     justify-content: space-between;
@@ -493,6 +532,7 @@ h2 {
 .game-card:hover .hide-game-btn { opacity: 1; }
 .hide-game-btn:hover { color: var(--loss-red-soft); }
 
+/* ── Error ── */
 .error {
     background-color: rgba(155, 58, 58, 0.15);
     border: 1px solid rgba(155, 58, 58, 0.35);
@@ -524,8 +564,249 @@ h2 {
 }
 .highlight { animation: highlight 1.5s ease-out; }
 
+/* ════════════════════════════════════════
+   ABOUT PAGE
+   ════════════════════════════════════════ */
+.page-content {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+}
+
+.about-hero {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.about-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--accent-brand);
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.about-subtitle {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin: 0 0 0.25rem;
+}
+
+.about-tagline {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent-warm);
+    margin: 0;
+}
+
+.about-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.about-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.about-card:hover {
+    border-color: var(--border-medium);
+    transform: translateY(-2px);
+}
+
+.about-card-icon {
+    font-size: 1.6rem;
+    margin-bottom: 0.5rem;
+}
+
+.about-card h3 {
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent-heading);
+    margin: 0 0 0.5rem;
+}
+
+.about-card p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin: 0;
+}
+
+.about-card p strong {
+    color: var(--text-primary);
+}
+
+.about-disclaimer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 1.25rem;
+}
+
+/* ════════════════════════════════════════
+   STATS PAGE
+   ════════════════════════════════════════ */
+.stats-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-heading);
+    text-align: center;
+    border-bottom: 1px solid rgba(184, 212, 168, 0.15);
+    padding-bottom: 14px;
+    margin: 40px 0 24px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+}
+
+.stat-tile {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    transition: border-color 0.2s;
+}
+
+.stat-tile.positive {
+    border-color: var(--win-green);
+}
+
+.stat-tile.negative {
+    border-color: var(--loss-red);
+}
+
+.stat-tile-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--accent-stat);
+}
+
+.stat-tile.positive .stat-tile-value { color: var(--win-green-soft); }
+.stat-tile.negative .stat-tile-value { color: var(--loss-red-soft); }
+
+.stat-tile-label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+}
+
+/* Sparkline */
+.sparkline-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.sparkline-card h3 {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 0 0 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.sparkline {
+    width: 100%;
+    height: 80px;
+    display: block;
+}
+
+.sparkline-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    letter-spacing: 0.04em;
+}
+
+/* Highlights */
+.highlights-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.75rem;
+}
+
+.highlight-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+}
+
+.highlight-card.win {
+    border-left: 3px solid var(--win-green);
+}
+
+.highlight-card.loss {
+    border-left: 3px solid var(--loss-red);
+}
+
+.highlight-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.highlight-teams {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.2rem;
+}
+
+.highlight-amount {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.highlight-card.win  .highlight-amount { color: var(--win-green-soft); }
+.highlight-card.loss .highlight-amount { color: var(--loss-red-soft); }
+
+.highlight-date {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+    letter-spacing: 0.04em;
+}
+
+/* ════════════════════════════════════════
+   RESPONSIVE
+   ════════════════════════════════════════ */
 @media (max-width: 768px) {
-    .strategy-navbar { padding: 0 20px; }
+    .strategy-navbar { padding: 0 16px; }
 
     .underdog-tracker { padding: 80px 16px 40px; }
 
@@ -554,5 +835,16 @@ h2 {
 
     .strategy-navbar-content { gap: 12px; }
 
-    .data-info { display: none; }
+    .nav-tabs { gap: 3px; }
+
+    .nav-tab {
+        padding: 4px 9px;
+        font-size: 11px;
+    }
+
+    .about-title { font-size: 2rem; }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
