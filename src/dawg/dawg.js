@@ -407,9 +407,9 @@ const UnderdogTracker = () => {
                                             <div className="matchup">
                                                 <div className={`team ${game.isTossup && game.winner === game.homeTeam ? 'tossup-winner' : !game.isTossup && game.winner === game.homeTeam ? 'winner' : ''}`}>
                                                     {game.homeTeam}
-                                                    {isFavoriteMode
+                                                    {!game.isTossup && (isFavoriteMode
                                                         ? game.favorite === game.homeTeam && ' 👑'
-                                                        : game.underdog === game.homeTeam && ' 🐶'}
+                                                        : game.underdog === game.homeTeam && ' 🐶')}
                                                     <span className="team-odds">
                                         {formatOdds(game.homeTeam === game.favorite ? game.favoriteOdds : game.underdogOdds)}
                                     </span>
@@ -417,9 +417,9 @@ const UnderdogTracker = () => {
                                                 <div className="vs">vs</div>
                                                 <div className={`team ${game.isTossup && game.winner === game.awayTeam ? 'tossup-winner' : !game.isTossup && game.winner === game.awayTeam ? 'winner' : ''}`}>
                                                     {game.awayTeam}
-                                                    {isFavoriteMode
+                                                    {!game.isTossup && (isFavoriteMode
                                                         ? game.favorite === game.awayTeam && ' 👑'
-                                                        : game.underdog === game.awayTeam && ' 🐶'}
+                                                        : game.underdog === game.awayTeam && ' 🐶')}
                                                     <span className="team-odds">
                                         {formatOdds(game.awayTeam === game.favorite ? game.favoriteOdds : game.underdogOdds)}
                                     </span>
