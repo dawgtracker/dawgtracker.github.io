@@ -287,7 +287,7 @@ const UnderdogTracker = () => {
     );
 
     const upcomingGames = sortGames(
-        games.filter(game => !game.completed).filter(involvesTournamentTeam),
+        games.filter(game => !game.completed && game.startTime > new Date()).filter(involvesTournamentTeam),
         sortMethod
     );
 
