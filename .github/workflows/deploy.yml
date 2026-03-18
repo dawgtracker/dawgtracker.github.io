@@ -18,11 +18,15 @@ jobs:
           curl "https://api.the-odds-api.com/v4/sports/basketball_ncaab/odds?apiKey=${{ secrets.REACT_APP_API_KEY }}&regions=us&markets=h2h,spreads&oddsFormat=american" -o public/odds_live.json
           curl "https://api.the-odds-api.com/v4/sports/basketball_ncaab/scores?apiKey=${{ secrets.REACT_APP_API_KEY }}&daysFrom=1" -o public/scores.json
           node -e "
-            const live = require('./public/odds_live.json');
-            const manual = require('./public/odds_manual.json');
+            const fs = require('fs');
+            const live = JSON.parse(fs.readFileSync('./public/odds_live.json'));
+            const manual = [
+              {\"id\":\"dcc2e1aabfce3314a2ea90e566839129\",\"sport_key\":\"basketball_ncaab\",\"sport_title\":\"NCAAB\",\"commence_time\":\"2026-03-17T22:41:04Z\",\"home_team\":\"Howard Bison\",\"away_team\":\"UMBC Retrievers\",\"bookmakers\":[{\"key\":\"draftkings\",\"title\":\"DraftKings\",\"last_update\":\"2026-03-17T22:41:04Z\",\"markets\":[{\"key\":\"h2h\",\"last_update\":\"2026-03-17T22:41:04Z\",\"outcomes\":[{\"name\":\"Howard Bison\",\"price\":-110},{\"name\":\"UMBC Retrievers\",\"price\":-110}]}]}]},
+              {\"id\":\"83db61d68c8c62ef872b1eee299ab99e\",\"sport_key\":\"basketball_ncaab\",\"sport_title\":\"NCAAB\",\"commence_time\":\"2026-03-18T01:29:44Z\",\"home_team\":\"Texas Longhorns\",\"away_team\":\"NC State Wolfpack\",\"bookmakers\":[{\"key\":\"draftkings\",\"title\":\"DraftKings\",\"last_update\":\"2026-03-18T01:29:44Z\",\"markets\":[{\"key\":\"h2h\",\"last_update\":\"2026-03-18T01:29:44Z\",\"outcomes\":[{\"name\":\"Texas Longhorns\",\"price\":100},{\"name\":\"NC State Wolfpack\",\"price\":-120}]}]}]}
+            ];
             const liveIds = new Set(live.map(g => g.id));
             const merged = [...manual.filter(g => !liveIds.has(g.id)), ...live];
-            require('fs').writeFileSync('./public/odds.json', JSON.stringify(merged));
+            fs.writeFileSync('./public/odds.json', JSON.stringify(merged));
           "
       - name: Setup Node
         uses: actions/setup-node@v3
