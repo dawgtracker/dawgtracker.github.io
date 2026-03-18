@@ -235,12 +235,14 @@ const UnderdogTracker = () => {
         const filteredGames = allCompletedGames.filter(involvesTournamentTeam);
         const completedGames = filteredGames.filter(game => game.winner);
 
-        const tossups = completedGames.filter(game => game.underdogOdds === game.favoriteOdds).map(game => ({
-            ...game,
-            isTossup: true,
-            pickWon: false,
-            potentialProfit: 0
-        }));
+        const tossups = completedGames
+            .filter(game => game.underdogOdds === game.favoriteOdds || game.isTossup)
+            .map(game => ({
+                ...game,
+                isTossup: true,
+                pickWon: false,
+                potentialProfit: 0
+            }));
 
         const bettingResults = completedGames
             .filter(game => game.underdogOdds !== game.favoriteOdds)
