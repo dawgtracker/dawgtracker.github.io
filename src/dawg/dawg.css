@@ -407,7 +407,7 @@ h2 {
 }
 
 .tossup-text {
-    color: #c8b89a;
+    color: #c8b89a !important;
 }
 
 .game-time {

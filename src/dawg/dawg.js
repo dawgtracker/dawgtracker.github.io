@@ -12,6 +12,7 @@ const UnderdogTracker = () => {
     const [sortMethod, setSortMethod] = useState('time');
     const [filterByTeams, setFilterByTeams] = useState(true);
     const [bettingMode, setBettingMode] = useState('underdog');
+    const [tossupGames, setTossupGames] = useState([]);
 
     const CACHE_TIME_KEY = "underdogCacheTime";
     const COMPLETED_GAMES_CACHE_KEY = "underdogCompletedGamesCache";
@@ -232,17 +233,25 @@ const UnderdogTracker = () => {
         const filteredGames = allCompletedGames.filter(involvesTournamentTeam);
         const completedGames = filteredGames.filter(game => game.winner);
 
-        const bettingResults = completedGames.map(game => {
-            const pickOdds = getPickOdds(game);
-            const isTossup = game.underdogOdds === game.favoriteOdds;
-            const pickWon = isTossup ? false : getPickWon(game);
-            const potentialProfit = isTossup ? 0 : (pickWon
-                ? (betAmount * (pickOdds > 0 ? pickOdds / 100 : 100 / Math.abs(pickOdds)))
-                : -betAmount);
+        const tossups = completedGames.filter(game => game.underdogOdds === game.favoriteOdds).map(game => ({
+            ...game,
+            isTossup: true,
+            pickWon: false,
+            potentialProfit: 0
+        }));
 
-            return { ...game, isTossup, underdogWon: game.winner === game.underdog, pickWon, potentialProfit };
-        });
+        const bettingResults = completedGames
+            .filter(game => game.underdogOdds !== game.favoriteOdds)
+            .map(game => {
+                const pickWon = getPickWon(game);
+                const pickOdds = getPickOdds(game);
+                const potentialProfit = pickWon
+                    ? (betAmount * (pickOdds > 0 ? pickOdds / 100 : 100 / Math.abs(pickOdds)))
+                    : -betAmount;
+                return { ...game, isTossup: false, underdogWon: game.winner === game.underdog, pickWon, potentialProfit };
+            });
 
+        setTossupGames(tossups);
         setResults(bettingResults);
         const totalProfitLoss = bettingResults.reduce((sum, game) => sum + game.potentialProfit, 0);
         setProfitLoss(totalProfitLoss);
@@ -380,7 +389,7 @@ const UnderdogTracker = () => {
                             <p className="empty-state">no completed games yet — check back after tip-off {modeEmoji}</p>
                         ) : (
                             <div className="games-list">
-                                {sortGames(results, sortMethod === 'profit' ? 'profit' : 'timeDesc')
+                                {sortGames([...results, ...tossupGames], sortMethod === 'profit' ? 'profit' : 'timeDesc')
                                     .map(game => (
                                         <div key={game.id}
                                              className={`game-card completed ${game.isTossup ? 'tossup' : game.pickWon ? 'win' : 'loss'}`}>
