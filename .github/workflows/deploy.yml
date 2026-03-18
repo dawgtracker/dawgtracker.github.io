@@ -15,8 +15,15 @@ jobs:
         uses: actions/checkout@v3
       - name: Fetch odds
         run: |
-          curl "https://api.the-odds-api.com/v4/sports/basketball_ncaab/odds?apiKey=${{ secrets.REACT_APP_API_KEY }}&regions=us&markets=h2h,spreads&oddsFormat=american" -o public/odds.json
+          curl "https://api.the-odds-api.com/v4/sports/basketball_ncaab/odds?apiKey=${{ secrets.REACT_APP_API_KEY }}&regions=us&markets=h2h,spreads&oddsFormat=american" -o public/odds_live.json
           curl "https://api.the-odds-api.com/v4/sports/basketball_ncaab/scores?apiKey=${{ secrets.REACT_APP_API_KEY }}&daysFrom=1" -o public/scores.json
+          node -e "
+            const live = require('./public/odds_live.json');
+            const manual = require('./public/odds_manual.json');
+            const liveIds = new Set(live.map(g => g.id));
+            const merged = [...manual.filter(g => !liveIds.has(g.id)), ...live];
+            require('fs').writeFileSync('./public/odds.json', JSON.stringify(merged));
+          "
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
