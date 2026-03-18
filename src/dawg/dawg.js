@@ -173,9 +173,12 @@ const UnderdogTracker = () => {
                     if (homeOdds > awayOdds) {
                         underdog = homeTeam; underdogOdds = homeOdds;
                         favorite = awayTeam; favoriteOdds = awayOdds;
-                    } else {
+                    } else if (awayOdds > homeOdds) {
                         underdog = awayTeam; underdogOdds = awayOdds;
                         favorite = homeTeam; favoriteOdds = homeOdds;
+                    } else {
+                        underdog = null; underdogOdds = homeOdds;
+                        favorite = null; favoriteOdds = awayOdds;
                     }
                 }
             }
@@ -230,13 +233,14 @@ const UnderdogTracker = () => {
         const completedGames = filteredGames.filter(game => game.winner);
 
         const bettingResults = completedGames.map(game => {
-            const pickWon = getPickWon(game);
             const pickOdds = getPickOdds(game);
-            const potentialProfit = pickWon
+            const isTossup = game.underdogOdds === game.favoriteOdds;
+            const pickWon = isTossup ? false : getPickWon(game);
+            const potentialProfit = isTossup ? 0 : (pickWon
                 ? (betAmount * (pickOdds > 0 ? pickOdds / 100 : 100 / Math.abs(pickOdds)))
-                : -betAmount;
+                : -betAmount);
 
-            return { ...game, underdogWon: game.winner === game.underdog, pickWon, potentialProfit };
+            return { ...game, isTossup, underdogWon: game.winner === game.underdog, pickWon, potentialProfit };
         });
 
         setResults(bettingResults);
@@ -379,7 +383,7 @@ const UnderdogTracker = () => {
                                 {sortGames(results, sortMethod === 'profit' ? 'profit' : 'timeDesc')
                                     .map(game => (
                                         <div key={game.id}
-                                             className={`game-card completed ${game.pickWon ? 'win' : 'loss'}`}>
+                                             className={`game-card completed ${game.isTossup ? 'tossup' : game.pickWon ? 'win' : 'loss'}`}>
                                             <div className="game-time">{game.startTime.toLocaleDateString()}</div>
                                             <div className="matchup">
                                                 <div
@@ -406,14 +410,14 @@ const UnderdogTracker = () => {
                                             </div>
                                             <div className="result">
                                                 <span>Result: </span>
-                                                <span className={game.pickWon ? 'profit' : 'loss'}>
-                                                    {game.pickWon ? `${modeLabel} Won!` : `${modeLabel} Lost`}
+                                                <span className={game.isTossup ? '' : game.pickWon ? 'profit' : 'loss'}>
+                                                    {game.isTossup ? 'Tossup' : game.pickWon ? `${modeLabel} Won!` : `${modeLabel} Lost`}
                                                 </span>
                                             </div>
                                             <div className="bet-result">
                                                 <span>Bet Result: </span>
-                                                <span className={game.pickWon ? 'profit' : 'loss'}>
-                                                    {game.pickWon
+                                                <span className={game.isTossup ? '' : game.pickWon ? 'profit' : 'loss'}>
+                                                    {game.isTossup ? '$0.00' : game.pickWon
                                                         ? `+$${game.potentialProfit.toFixed(2)}`
                                                         : `-$${betAmount.toFixed(2)}`}
                                                 </span>

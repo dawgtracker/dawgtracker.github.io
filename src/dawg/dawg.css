@@ -432,6 +432,10 @@ h2 {
     color: var(--text-primary);
 }
 
+.game-card.tossup {
+    background-color: #c8b89a;
+}
+
 .team.underdog  { color: var(--accent-warm); }
 .team.favorite  { color: #7ab3d4; }
 .team.winner    {
