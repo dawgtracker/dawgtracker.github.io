@@ -216,7 +216,7 @@ const UnderdogTracker = () => {
                 awayTeam: game.away_team,
                 startTime: new Date(game.commence_time),
                 completed: true,
-                isTossup,
+                isTossup, //
                 winner: game.scores[0].score > game.scores[1].score ? game.scores[0].name : game.scores[1].name,
                 ...originalOdds
             };
