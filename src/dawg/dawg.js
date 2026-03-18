@@ -209,12 +209,14 @@ const UnderdogTracker = () => {
         const cachedProcessedGames = cachedCompletedGames.map(game => {
             const originalOddsKey = `original_odds_${game.id}`;
             const originalOdds = JSON.parse(localStorage.getItem(originalOddsKey) || '{}');
+            const isTossup = originalOdds.underdogOdds === originalOdds.favoriteOdds;
             return {
                 id: game.id,
                 homeTeam: game.home_team,
                 awayTeam: game.away_team,
                 startTime: new Date(game.commence_time),
                 completed: true,
+                isTossup,
                 winner: game.scores[0].score > game.scores[1].score ? game.scores[0].name : game.scores[1].name,
                 ...originalOdds
             };
