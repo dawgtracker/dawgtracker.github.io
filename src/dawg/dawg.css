@@ -402,6 +402,10 @@ h2 {
     border-left: 3px solid var(--loss-red);
 }
 
+.game-card.tossup {
+    border-left: 3px solid #c8b89a;
+}
+
 .game-time {
     font-size: 11px;
     font-weight: 500;
@@ -430,10 +434,6 @@ h2 {
     font-size: 15px;
     font-weight: 500;
     color: var(--text-primary);
-}
-
-.game-card.tossup {
-    background-color: #c8b89a;
 }
 
 .team.underdog  { color: var(--accent-warm); }
