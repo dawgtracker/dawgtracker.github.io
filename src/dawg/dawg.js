@@ -330,11 +330,41 @@ const UnderdogTracker = () => {
             const scoresResponse = await fetch('/scores.json');
             const scoresData = await scoresResponse.json();
 
+            const oddsMap = {};
+            oddsData.forEach(game => {
+                const bookmaker = game.bookmakers?.[0];
+                if (bookmaker) {
+                    const h2hMarket = bookmaker.markets?.find(m => m.key === 'h2h');
+                    if (h2hMarket) {
+                        const outcomes = h2hMarket.outcomes;
+                        const homeTeam = game.home_team;
+                        const awayTeam = game.away_team;
+                        const homeOdds = outcomes.find(o => o.name === homeTeam)?.price;
+                        const awayOdds = outcomes.find(o => o.name === awayTeam)?.price;
+                        if (homeOdds && awayOdds) {
+                            const key = [homeTeam, awayTeam].sort().join('|');
+                            oddsMap[key] = {
+                                underdog: homeOdds > awayOdds ? homeTeam : awayTeam,
+                                underdogOdds: homeOdds > awayOdds ? homeOdds : awayOdds,
+                                favorite: homeOdds > awayOdds ? awayTeam : homeTeam,
+                                favoriteOdds: homeOdds > awayOdds ? awayOdds : homeOdds,
+                            };
+                        }
+                    }
+                }
+            });
+
             const cachedCompletedGames = JSON.parse(localStorage.getItem(COMPLETED_GAMES_CACHE_KEY) || '[]');
-            const newCompletedGames = scoresData.filter(score =>
-                score.completed && score.scores &&
-                !cachedCompletedGames.some(cached => cached.id === score.id)
-            );
+            const newCompletedGames = scoresData
+                .filter(score =>
+                    score.completed && score.scores &&
+                    !cachedCompletedGames.some(cached => cached.id === score.id)
+                )
+                .map(score => ({
+                    ...score,
+                    ...( oddsMap[[score.home_team, score.away_team].sort().join('|')] || {})
+                }));
+
             const mergedCompletedGames = [...cachedCompletedGames, ...newCompletedGames];
             localStorage.setItem(COMPLETED_GAMES_CACHE_KEY, JSON.stringify(mergedCompletedGames));
             setCompletedGamesData(mergedCompletedGames);
@@ -395,10 +425,17 @@ const UnderdogTracker = () => {
     };
 
     useEffect(() => {
+        console.log('completedGamesData:', completedGamesData);
+        console.log('games:', games);
+
         const cachedProcessedGames = completedGamesData.map(game => {
             const originalOddsKey = `original_odds_${game.id}`;
-            const originalOdds = JSON.parse(localStorage.getItem(originalOddsKey) || '{}');
-            const isTossup = originalOdds.underdogOdds === originalOdds.favoriteOdds;
+            const fallbackOdds = JSON.parse(localStorage.getItem(originalOddsKey) || '{}');
+            const underdog = game.underdog || fallbackOdds.underdog;
+            const underdogOdds = game.underdogOdds || fallbackOdds.underdogOdds;
+            const favorite = game.favorite || fallbackOdds.favorite;
+            const favoriteOdds = game.favoriteOdds || fallbackOdds.favoriteOdds;
+            const isTossup = underdogOdds === favoriteOdds || (!underdogOdds && !favoriteOdds);
             return {
                 id: game.id,
                 homeTeam: game.home_team,
@@ -406,23 +443,30 @@ const UnderdogTracker = () => {
                 startTime: new Date(game.commence_time),
                 completed: true,
                 isTossup,
+                underdog,
+                underdogOdds,
+                favorite,
+                favoriteOdds,
                 winner: game.scores[0].score > game.scores[1].score ? game.scores[0].name : game.scores[1].name,
-                ...originalOdds
             };
         });
 
+        console.log('cachedProcessedGames:', cachedProcessedGames);
+
         const completedFromCurrentFetch = games.filter(game => game.completed);
-        const allCompletedGames = [
-            ...completedFromCurrentFetch.map(game => {
-                const originalOddsKey = `original_odds_${game.id}`;
-                const storedOriginalOdds = JSON.parse(localStorage.getItem(originalOddsKey) || '{}');
-                return { ...game, ...storedOriginalOdds };
-            }),
-            ...cachedProcessedGames
-        ];
+        const allCompletedGames = [...completedFromCurrentFetch.map(game => {
+            const originalOddsKey = `original_odds_${game.id}`;
+            const storedOriginalOdds = JSON.parse(localStorage.getItem(originalOddsKey) || '{}');
+            return { ...game, ...storedOriginalOdds };
+        }), ...cachedProcessedGames];
+
+        console.log('allCompletedGames:', allCompletedGames);
 
         const filteredGames = allCompletedGames.filter(involvesTournamentTeam);
+        console.log('filteredGames:', filteredGames);
+
         const completedGames = filteredGames.filter(game => game.winner);
+        console.log('completedGames:', completedGames);
 
         const tossups = completedGames
             .filter(game => game.underdogOdds === game.favoriteOdds || game.isTossup)
@@ -581,7 +625,7 @@ const UnderdogTracker = () => {
                     {showCompleted && (
                         <>
                             <h2>Completed Games</h2>
-                            {results.length === 0 ? (
+                            {results.length === 0 && tossupGames.length === 0 ? (
                                 <p className="empty-state">no completed games yet — check back after
                                     tip-off {modeEmoji}</p>
                             ) : (
