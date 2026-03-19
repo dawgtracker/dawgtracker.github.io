@@ -31,6 +31,13 @@ jobs:
             const merged = [...manual.filter(g => !liveIds.has(g.id)), ...live];
             fs.writeFileSync('./public/odds.json', JSON.stringify(merged));
           "
+      - name: Commit JSON files
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -f public/odds.json public/scores.json
+          git diff --staged --quiet || git commit -m "Update odds and scores data"
+          git push
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
