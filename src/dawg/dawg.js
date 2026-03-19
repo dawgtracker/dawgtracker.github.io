@@ -262,7 +262,7 @@ const UnderdogTracker = () => {
     const [activePage, setActivePage] = useState(() => sessionStorage.getItem('dawg_page') || 'about');
     const [showGamesArrow, setShowGamesArrow] = useState(() => sessionStorage.getItem('dawg_arrow') !== 'false');
 
-    const COMPLETED_GAMES_CACHE_KEY = "underdogCompletedGamesCache";
+    const COMPLETED_GAMES_CACHE_KEY = "underdogCompletedGamesCache_v0";
 
     const isFavoriteMode = bettingMode === 'favorite';
     const modeLabel = isFavoriteMode ? 'Favorite' : 'Underdog';
@@ -403,7 +403,7 @@ const UnderdogTracker = () => {
 
             const oddsMap = {};
             oddsData.forEach(game => {
-                const bookmaker = game.bookmakers?.[0];
+                const bookmaker = game.bookmakers?.find(b => b.key === 'draftkings') ?? game.bookmakers?.[0];
                 if (bookmaker) {
                     const h2hMarket = bookmaker.markets?.find(m => m.key === 'h2h');
                     if (h2hMarket) {
@@ -452,7 +452,7 @@ const UnderdogTracker = () => {
     const processGamesData = (gamesData) => {
         return gamesData.map(game => {
             let homeTeam, awayTeam, homeOdds, awayOdds, underdog, underdogOdds, favorite, favoriteOdds;
-            const bookmaker = game.bookmakers?.[0];
+            const bookmaker = game.bookmakers?.find(b => b.key === 'draftkings') ?? game.bookmakers?.[0];
 
             if (bookmaker) {
                 const h2hMarket = bookmaker.markets.find(m => m.key === 'h2h');

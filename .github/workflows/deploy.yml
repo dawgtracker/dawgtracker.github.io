@@ -54,12 +54,12 @@ jobs:
 
             const updatedScores = newScores.map(g => ({
               ...g,
-              ...(existingMap[g.id]?.underdogOdds ? {
+              ...(oddsMap[g.id] || (existingMap[g.id]?.underdogOdds ? {
                 underdog: existingMap[g.id].underdog,
                 underdogOdds: existingMap[g.id].underdogOdds,
                 favorite: existingMap[g.id].favorite,
                 favoriteOdds: existingMap[g.id].favoriteOdds,
-              } : oddsMap[g.id] || {})
+              } : {}))
             }));
 
             existingScores.forEach(g => {
