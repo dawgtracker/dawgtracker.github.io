@@ -28,10 +28,9 @@ jobs:
             const merged = [...manual.filter(g => !liveIds.has(g.id)), ...live];
             fs.writeFileSync('./public/odds.json', JSON.stringify(merged));
 
-            // Build odds map from live and manual odds
             const oddsMap = {};
             [...live, ...manual].forEach(g => {
-              const bk = g.bookmakers?.[0];
+              const bk = g.bookmakers?.find(b => b.key === 'draftkings');
               if (!bk) return;
               const h2h = bk.markets?.find(m => m.key === 'h2h');
               if (!h2h) return;
@@ -47,7 +46,6 @@ jobs:
               }
             });
 
-            // Merge odds into new scores, preserving existing odds
             const newScores = JSON.parse(fs.readFileSync('./public/scores_live.json'));
             let existingScores = [];
             try { existingScores = JSON.parse(fs.readFileSync('./public/scores.json')); } catch(e) {}
@@ -64,7 +62,6 @@ jobs:
               } : oddsMap[g.id] || {})
             }));
 
-            // Add any old games from existing scores not in new fetch
             existingScores.forEach(g => {
               if (!updatedScores.find(s => s.id === g.id)) updatedScores.push(g);
             });
