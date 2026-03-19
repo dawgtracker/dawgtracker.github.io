@@ -148,7 +148,7 @@ body {
 .positive-pl  { color: var(--win-green-soft); }
 .negative-pl  { color: var(--loss-red-soft); }
 
-/* ── Nav Tabs (replaces .data-info) ── */
+/* ── Nav Tabs ── */
 .nav-tabs {
     display: flex;
     gap: 4px;
@@ -733,9 +733,31 @@ h2 {
     letter-spacing: 0.1em;
 }
 
+.sparkline-wrap {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.sparkline-yaxis {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    text-align: right;
+    padding: 2px 0;
+    min-width: 40px;
+}
+
+.sparkline-svg-wrap {
+    flex: 1;
+}
+
 .sparkline {
     width: 100%;
-    height: 80px;
+    height: 100px;
     display: block;
 }
 
@@ -744,7 +766,8 @@ h2 {
     justify-content: space-between;
     font-size: 0.68rem;
     color: var(--text-muted);
-    margin-top: 0.25rem;
+    margin-top: 0.4rem;
+    margin-left: 48px;
     letter-spacing: 0.04em;
 }
 
@@ -803,6 +826,80 @@ h2 {
 }
 
 /* ════════════════════════════════════════
+   GAMES TAB ARROW INDICATOR
+   ════════════════════════════════════════ */
+
+/* Wrapper positions the arrow above the Games button */
+.nav-tab-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* The arrow + label, floating below the button */
+.games-arrow-indicator {
+    position: absolute;
+    /* sit below the button */
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    pointer-events: none;
+    white-space: nowrap;
+    color: var(--accent-warm);
+    z-index: 1100;
+    animation: arrowBounce 0.9s ease-in-out infinite;
+}
+
+.games-arrow-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+
+.games-arrow-svg {
+    width: 16px;
+    height: 22px;
+    display: block;
+}
+
+/* Subtle bounce — moves up toward the button */
+@keyframes arrowBounce {
+    0%, 100% { transform: translateX(-50%) translateY(0px);  }
+    50%       { transform: translateX(-50%) translateY(-5px); }
+}
+
+/* Pulsing ring around the Games button while arrow is visible */
+.nav-tab--highlighted {
+    position: relative;
+    color: var(--accent-warm) !important;
+    border-color: rgba(232, 149, 109, 0.5) !important;
+}
+
+.nav-tab--highlighted::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: calc(var(--radius-md) + 2px);
+    border: 1.5px solid var(--accent-warm);
+    opacity: 0;
+    animation: pulseRing 1.4s ease-out infinite;
+    pointer-events: none;
+}
+
+@keyframes pulseRing {
+    0%   { opacity: 0.7; transform: scale(1); }
+    100% { opacity: 0;   transform: scale(1.18); }
+}
+
+/* ════════════════════════════════════════
    RESPONSIVE
    ════════════════════════════════════════ */
 @media (max-width: 768px) {
@@ -847,4 +944,8 @@ h2 {
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    /* Slightly smaller arrow on mobile */
+    .games-arrow-label { font-size: 0.55rem; }
+    .games-arrow-svg   { width: 13px; height: 18px; }
 }

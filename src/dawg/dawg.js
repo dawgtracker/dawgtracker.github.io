@@ -64,6 +64,92 @@ const AboutPage = () => (
     </div>
 );
 
+// ─── Sparkline ────────────────────────────────────────────────────────────────
+const Sparkline = ({ runningPL, totalPL }) => {
+    const [hoveredIdx, setHoveredIdx] = useState(null);
+    const svgH = 100, svgW = 300, pad = 10;
+    const minPL = Math.min(...runningPL);
+    const maxPL = Math.max(...runningPL);
+    const range = maxPL - minPL || 1;
+    const toY = v => pad + ((maxPL - v) / range) * (svgH - pad * 2);
+    const points = runningPL.map((v, i) => ({
+        x: pad + (i / Math.max(runningPL.length - 1, 1)) * (svgW - pad * 2),
+        y: toY(v),
+        pl: v,
+    }));
+
+    return (
+        <div className="sparkline-card">
+            <h3>Running P/L</h3>
+            <div className="sparkline-wrap">
+                <div className="sparkline-yaxis">
+                    <span>{maxPL >= 0 ? '+' : ''}${maxPL.toFixed(0)}</span>
+                    {minPL < 0 && maxPL > 0 && <span>$0</span>}
+                    <span>{minPL >= 0 ? '+' : ''}${minPL.toFixed(0)}</span>
+                </div>
+                <div className="sparkline-svg-wrap">
+                    <svg viewBox={`0 0 ${svgW} ${svgH}`} className="sparkline"
+                         onMouseLeave={() => setHoveredIdx(null)}>
+                        {minPL < 0 && maxPL > 0 && (
+                            <line
+                                x1={pad} y1={toY(0)}
+                                x2={svgW - pad} y2={toY(0)}
+                                stroke="var(--border-medium)"
+                                strokeWidth="1"
+                                strokeDasharray="4,4"
+                            />
+                        )}
+                        <polyline
+                            points={points.map(p => `${p.x},${p.y}`).join(' ')}
+                            fill="none"
+                            stroke={totalPL >= 0 ? 'var(--win-green-soft)' : 'var(--loss-red-soft)'}
+                            strokeWidth="2.5"
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                        />
+                        {points.map((p, i) => (
+                            <circle
+                                key={i}
+                                cx={p.x} cy={p.y}
+                                r={hoveredIdx === i ? 5 : 3}
+                                fill={p.pl >= 0 ? 'var(--win-green-soft)' : 'var(--loss-red-soft)'}
+                                stroke="var(--bg-card)"
+                                strokeWidth="1.5"
+                                style={{ cursor: 'pointer', transition: 'r 0.1s' }}
+                                onMouseEnter={() => setHoveredIdx(i)}
+                            />
+                        ))}
+                        {hoveredIdx !== null && (() => {
+                            const p = points[hoveredIdx];
+                            const label = `${p.pl >= 0 ? '+' : ''}$${p.pl.toFixed(2)}`;
+                            const boxW = 76, boxH = 22;
+                            const bx = Math.min(Math.max(p.x - boxW / 2, 0), svgW - boxW);
+                            const by = p.y - boxH - 8 < 0 ? p.y + 8 : p.y - boxH - 8;
+                            return (
+                                <g pointerEvents="none">
+                                    <rect x={bx} y={by} width={boxW} height={boxH}
+                                          rx="4" fill="var(--bg-elevated)"
+                                          stroke="var(--border-medium)" strokeWidth="1"/>
+                                    <text x={bx + boxW / 2} y={by + 15}
+                                          textAnchor="middle"
+                                          fill={p.pl >= 0 ? 'var(--win-green-soft)' : 'var(--loss-red-soft)'}
+                                          fontSize="11" fontFamily="Space Mono, monospace" fontWeight="700">
+                                        {label}
+                                    </text>
+                                </g>
+                            );
+                        })()}
+                    </svg>
+                </div>
+            </div>
+            <div className="sparkline-labels">
+                <span>Game 1</span>
+                <span>Game {runningPL.length}</span>
+            </div>
+        </div>
+    );
+};
+
 // ─── Stats / History Page ─────────────────────────────────────────────────────
 const StatsPage = ({results, tossupGames, betAmount, bettingMode}) => {
     const isFavoriteMode = bettingMode === 'favorite';
@@ -83,14 +169,6 @@ const StatsPage = ({results, tossupGames, betAmount, bettingMode}) => {
         .slice()
         .sort((a, b) => a.startTime - b.startTime)
         .map(g => { running += g.potentialProfit; return running; });
-
-    const maxAbs = Math.max(...runningPL.map(Math.abs), 1);
-    const svgH = 80, svgW = 300, pad = 10;
-    const pts = runningPL.map((v, i) => {
-        const x = pad + (i / Math.max(runningPL.length - 1, 1)) * (svgW - pad * 2);
-        const y = svgH / 2 - (v / maxAbs) * (svgH / 2 - pad);
-        return `${x},${y}`;
-    }).join(' ');
 
     return (
         <div className="page-content stats-page">
@@ -134,25 +212,7 @@ const StatsPage = ({results, tossupGames, betAmount, bettingMode}) => {
             </div>
 
             {runningPL.length > 1 && (
-                <div className="sparkline-card">
-                    <h3>Running P/L</h3>
-                    <svg viewBox={`0 0 ${svgW} ${svgH}`} className="sparkline">
-                        <line x1={pad} y1={svgH / 2} x2={svgW - pad} y2={svgH / 2} stroke="var(--border)"
-                              strokeWidth="1" strokeDasharray="4,4"/>
-                        <polyline
-                            points={pts}
-                            fill="none"
-                            stroke={totalPL >= 0 ? 'var(--green)' : 'var(--red)'}
-                            strokeWidth="2.5"
-                            strokeLinejoin="round"
-                            strokeLinecap="round"
-                        />
-                    </svg>
-                    <div className="sparkline-labels">
-                        <span>Game 1</span>
-                        <span>Game {runningPL.length}</span>
-                    </div>
-                </div>
+                <Sparkline runningPL={runningPL} totalPL={totalPL} />
             )}
 
             <div className="highlights-row">
@@ -199,7 +259,8 @@ const UnderdogTracker = () => {
     const [bettingMode, setBettingMode] = useState('underdog');
     const [tossupGames, setTossupGames] = useState([]);
     const [completedGamesData, setCompletedGamesData] = useState([]);
-    const [activePage, setActivePage] = useState('home');
+    const [activePage, setActivePage] = useState(() => sessionStorage.getItem('dawg_page') || 'about');
+    const [showGamesArrow, setShowGamesArrow] = useState(() => sessionStorage.getItem('dawg_arrow') !== 'false');
 
     const COMPLETED_GAMES_CACHE_KEY = "underdogCompletedGamesCache";
 
@@ -215,6 +276,11 @@ const UnderdogTracker = () => {
         setLoading(true);
         setError(null);
         fetchOddsForSport();
+    };
+
+    const handleGamesClick = () => {
+        setActivePage('home');
+        setShowGamesArrow(false);
     };
 
     const teamNameMap = {
@@ -320,6 +386,11 @@ const UnderdogTracker = () => {
         fetchOddsForSport();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+        sessionStorage.setItem('dawg_page', activePage);
+        sessionStorage.setItem('dawg_arrow', showGamesArrow);
+    }, [activePage, showGamesArrow]);
 
     const fetchOddsForSport = async () => {
         try {
@@ -550,12 +621,40 @@ const UnderdogTracker = () => {
                     </div>
 
                     <div className="nav-tabs">
-                        <button
-                            className={`nav-tab ${activePage === 'home' ? 'nav-tab--active' : ''}`}
-                            onClick={() => setActivePage('home')}
-                        >
-                            Games
-                        </button>
+                        {/* Games tab with animated arrow indicator */}
+                        <div className="nav-tab-wrapper">
+                            {showGamesArrow && (
+                                <div className="games-arrow-indicator" aria-hidden="true">
+                                    <svg
+                                        className="games-arrow-svg"
+                                        viewBox="0 0 24 32"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            d="M12 30 C12 30, 12 14, 12 12"
+                                            stroke="currentColor"
+                                            strokeWidth="2.5"
+                                            strokeLinecap="round"
+                                        />
+                                        <path
+                                            d="M5 18 L12 10 L19 18"
+                                            stroke="currentColor"
+                                            strokeWidth="2.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                    <span className="games-arrow-label">start here</span>
+                                </div>
+                            )}
+                            <button
+                                className={`nav-tab ${activePage === 'home' ? 'nav-tab--active' : ''} ${showGamesArrow ? 'nav-tab--highlighted' : ''}`}
+                                onClick={handleGamesClick}
+                            >
+                                Games
+                            </button>
+                        </div>
                         <button
                             className={`nav-tab ${activePage === 'stats' ? 'nav-tab--active' : ''}`}
                             onClick={() => setActivePage('stats')}
