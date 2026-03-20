@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import './dawg.css'
-// test
 
 // ─── About Page ──────────────────────────────────────────────────────────────
 const AboutPage = () => (
@@ -12,7 +11,6 @@ const AboutPage = () => (
         </div>
 
         <div className="about-cards">
-
             <div className="about-card">
                 <div className="about-card-icon">🐶</div>
                 <h3>The Strategy</h3>
@@ -195,18 +193,16 @@ const StatsPage = ({results, tossupGames, betAmount, bettingMode}) => {
                     <span className="stat-tile-value">{tossupGames.length}</span>
                     <span className="stat-tile-label">Pick'ems</span>
                 </div>
-                <div className={`stat-tile ${winRate >= 50 ? 'positive' : 'negative'}`}>
+                <div className={`stat-tile ${winRate >= 25 ? 'positive' : 'negative'}`}>
                     <span className="stat-tile-value">{totalBets > 0 ? `${winRate.toFixed(1)}%` : '—'}</span>
                     <span className="stat-tile-label">Win Rate</span>
                 </div>
                 <div className={`stat-tile ${totalPL > 0 ? 'positive' : totalPL < 0 ? 'negative' : ''}`}>
-                    <span
-                        className="stat-tile-value">{totalBets > 0 ? `${totalPL >= 0 ? '+' : ''}$${totalPL.toFixed(2)}` : '—'}</span>
+                    <span className="stat-tile-value">{totalBets > 0 ? `${totalPL >= 0 ? '+' : ''}$${totalPL.toFixed(2)}` : '—'}</span>
                     <span className="stat-tile-label">P / L</span>
                 </div>
                 <div className={`stat-tile ${roi > 0 ? 'positive' : roi < 0 ? 'negative' : ''}`}>
-                    <span
-                        className="stat-tile-value">{totalBets > 0 ? `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%` : '—'}</span>
+                    <span className="stat-tile-value">{totalBets > 0 ? `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%` : '—'}</span>
                     <span className="stat-tile-label">ROI</span>
                 </div>
             </div>
@@ -485,8 +481,9 @@ const UnderdogTracker = () => {
                 startTime: new Date(game.commence_time),
                 underdog, underdogOdds, favorite, favoriteOdds,
                 completed: game.completed || false,
+                // FIX: parse scores as numbers for correct comparison
                 winner: game.scores
-                    ? (game.scores[0].score > game.scores[1].score ? game.scores[0].name : game.scores[1].name)
+                    ? (Number(game.scores[0].score) > Number(game.scores[1].score) ? game.scores[0].name : game.scores[1].name)
                     : null,
             };
         }).filter(game =>
@@ -496,9 +493,6 @@ const UnderdogTracker = () => {
     };
 
     useEffect(() => {
-        console.log('completedGamesData:', completedGamesData);
-        console.log('games:', games);
-
         const cachedProcessedGames = completedGamesData.map(game => {
             const originalOddsKey = `original_odds_${game.id}`;
             const fallbackOdds = JSON.parse(localStorage.getItem(originalOddsKey) || '{}');
@@ -518,11 +512,10 @@ const UnderdogTracker = () => {
                 underdogOdds,
                 favorite,
                 favoriteOdds,
-                winner: game.scores[0].score > game.scores[1].score ? game.scores[0].name : game.scores[1].name,
+                // FIX: parse scores as numbers for correct comparison
+                winner: Number(game.scores[0].score) > Number(game.scores[1].score) ? game.scores[0].name : game.scores[1].name,
             };
         });
-
-        console.log('cachedProcessedGames:', cachedProcessedGames);
 
         const completedFromCurrentFetch = games.filter(game => game.completed);
         const allCompletedGames = [...completedFromCurrentFetch.map(game => {
@@ -531,13 +524,8 @@ const UnderdogTracker = () => {
             return { ...game, ...storedOriginalOdds };
         }), ...cachedProcessedGames];
 
-        console.log('allCompletedGames:', allCompletedGames);
-
         const filteredGames = allCompletedGames.filter(involvesTournamentTeam);
-        console.log('filteredGames:', filteredGames);
-
         const completedGames = filteredGames.filter(game => game.winner);
-        console.log('completedGames:', completedGames);
 
         const tossups = completedGames
             .filter(game => game.underdogOdds === game.favoriteOdds || game.isTossup)
@@ -574,6 +562,18 @@ const UnderdogTracker = () => {
     const calculatePotentialProfit = (odds, amount) => {
         if (!odds) return 0;
         return odds > 0 ? (amount * odds / 100) : (amount * 100 / Math.abs(odds));
+    };
+
+    const getTeamClass = (game, teamName) => {
+        if (game.isTossup) {
+            return game.winner === teamName ? 'tossup-winner' : '';
+        }
+        if (game.winner !== teamName) return '';
+        const isUnderdogWin = game.underdog === teamName;
+        if (isFavoriteMode) {
+            return isUnderdogWin ? 'favorite-won' : 'winner';
+        }
+        return isUnderdogWin ? 'winner' : 'favorite-won';
     };
 
     if (loading) return <div>Loading data...</div>;
@@ -621,7 +621,6 @@ const UnderdogTracker = () => {
                     </div>
 
                     <div className="nav-tabs">
-                        {/* Games tab with animated arrow indicator */}
                         <div className="nav-tab-wrapper">
                             {showGamesArrow && (
                                 <div className="games-arrow-indicator" aria-hidden="true">
@@ -725,8 +724,7 @@ const UnderdogTracker = () => {
                         <>
                             <h2>Completed Games</h2>
                             {results.length === 0 && tossupGames.length === 0 ? (
-                                <p className="empty-state">no completed games yet — check back after
-                                    tip-off {modeEmoji}</p>
+                                <p className="empty-state">no completed games yet — check back after tip-off {modeEmoji}</p>
                             ) : (
                                 <div className="games-list">
                                     {sortGames([...results, ...tossupGames], sortMethod === 'profit' ? 'profit' : 'timeDesc')
@@ -735,8 +733,7 @@ const UnderdogTracker = () => {
                                                  className={`game-card completed ${game.isTossup ? 'tossup' : game.pickWon ? 'win' : 'loss'}`}>
                                                 <div className="game-time">{game.startTime.toLocaleDateString()}</div>
                                                 <div className="matchup">
-                                                    <div
-                                                        className={`team ${game.isTossup && game.winner === game.homeTeam ? 'tossup-winner' : !game.isTossup && game.winner === game.homeTeam ? 'winner' : ''}`}>
+                                                    <div className={`team ${getTeamClass(game, game.homeTeam)}`}>
                                                         {game.homeTeam}
                                                         {!game.isTossup && (isFavoriteMode
                                                             ? game.favorite === game.homeTeam && ' 👑'
@@ -746,8 +743,7 @@ const UnderdogTracker = () => {
                                                         </span>
                                                     </div>
                                                     <div className="vs">vs</div>
-                                                    <div
-                                                        className={`team ${game.isTossup && game.winner === game.awayTeam ? 'tossup-winner' : !game.isTossup && game.winner === game.awayTeam ? 'winner' : ''}`}>
+                                                    <div className={`team ${getTeamClass(game, game.awayTeam)}`}>
                                                         {game.awayTeam}
                                                         {!game.isTossup && (isFavoriteMode
                                                             ? game.favorite === game.awayTeam && ' 👑'
@@ -759,15 +755,13 @@ const UnderdogTracker = () => {
                                                 </div>
                                                 <div className="result">
                                                     <span>Result: </span>
-                                                    <span
-                                                        className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
+                                                    <span className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
                                                         {game.isTossup ? "Pick'em" : game.pickWon ? `${modeLabel} Won!` : `${modeLabel} Lost`}
                                                     </span>
                                                 </div>
                                                 <div className="bet-result">
                                                     <span>Bet Result: </span>
-                                                    <span
-                                                        className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
+                                                    <span className={game.isTossup ? 'tossup-text' : game.pickWon ? 'profit' : 'loss'}>
                                                         {game.isTossup ? '$0.00' : game.pickWon
                                                             ? `+$${game.potentialProfit.toFixed(2)}`
                                                             : `-$${betAmount.toFixed(2)}`}
@@ -797,16 +791,14 @@ const UnderdogTracker = () => {
                                             {game.startTime.toLocaleDateString()} {game.startTime.toLocaleTimeString()}
                                         </div>
                                         <div className="matchup">
-                                            <div
-                                                className={`team ${pickTeam === game.homeTeam ? (isFavoriteMode ? 'favorite' : 'underdog') : (isFavoriteMode ? 'underdog' : 'favorite')}`}>
+                                            <div className={`team ${pickTeam === game.homeTeam ? (isFavoriteMode ? 'favorite' : 'underdog') : (isFavoriteMode ? 'underdog' : 'favorite')}`}>
                                                 {game.homeTeam}
                                                 {isFavoriteMode
                                                     ? game.favorite === game.homeTeam && ' 👑'
                                                     : game.underdog === game.homeTeam && ' 🐶'}
                                             </div>
                                             <div className="vs">vs</div>
-                                            <div
-                                                className={`team ${pickTeam === game.awayTeam ? (isFavoriteMode ? 'favorite' : 'underdog') : (isFavoriteMode ? 'underdog' : 'favorite')}`}>
+                                            <div className={`team ${pickTeam === game.awayTeam ? (isFavoriteMode ? 'favorite' : 'underdog') : (isFavoriteMode ? 'underdog' : 'favorite')}`}>
                                                 {game.awayTeam}
                                                 {isFavoriteMode
                                                     ? game.favorite === game.awayTeam && ' 👑'
@@ -839,9 +831,7 @@ const UnderdogTracker = () => {
                         </div>
                     )}
                     <div className="about-disclaimer">
-                        <p>⚠️ dawg is for entertainment and educational purposes only. no real money is involved.
-                            gamble
-                            responsibly.</p>
+                        <p>⚠️ dawg is for entertainment and educational purposes only. no real money is involved. gamble responsibly.</p>
                     </div>
                 </div>
             )}
