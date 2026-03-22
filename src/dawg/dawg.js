@@ -160,7 +160,6 @@ const StatsPage = ({results, tossupGames, betAmount, bettingMode}) => {
     const totalPL = results.reduce((sum, g) => sum + g.potentialProfit, 0);
     const roi = totalBets > 0 ? (totalPL / (betAmount * totalBets) * 100) : 0;
     const biggestWin = results.filter(g => g.pickWon).sort((a, b) => b.potentialProfit - a.potentialProfit)[0];
-    const biggestLoss = results.filter(g => !g.pickWon).sort((a, b) => a.potentialProfit - b.potentialProfit)[0];
 
     let running = 0;
     const runningPL = results
@@ -218,14 +217,6 @@ const StatsPage = ({results, tossupGames, betAmount, bettingMode}) => {
                         <div className="highlight-teams">{biggestWin.homeTeam} vs {biggestWin.awayTeam}</div>
                         <div className="highlight-amount">+${biggestWin.potentialProfit.toFixed(2)}</div>
                         <div className="highlight-date">{biggestWin.startTime.toLocaleDateString()}</div>
-                    </div>
-                )}
-                {biggestLoss && (
-                    <div className="highlight-card loss">
-                        <div className="highlight-label">📉 Biggest Loss</div>
-                        <div className="highlight-teams">{biggestLoss.homeTeam} vs {biggestLoss.awayTeam}</div>
-                        <div className="highlight-amount">-${betAmount.toFixed(2)}</div>
-                        <div className="highlight-date">{biggestLoss.startTime.toLocaleDateString()}</div>
                     </div>
                 )}
             </div>
