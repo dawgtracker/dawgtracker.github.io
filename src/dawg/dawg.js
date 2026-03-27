@@ -148,18 +148,41 @@ const Sparkline = ({ runningPL, totalPL }) => {
     );
 };
 
-// ─── Stats / History Page ─────────────────────────────────────────────────────
-const StatsPage = ({results, tossupGames, betAmount, bettingMode}) => {
+const MM_ROUNDS = [
+    { name: "First Four",   start: new Date("2026-03-18"), end: new Date("2026-03-19") },
+    { name: "Round of 64",  start: new Date("2026-03-19"), end: new Date("2026-03-21") },
+    { name: "Round of 32",  start: new Date("2026-03-21"), end: new Date("2026-03-23") },
+    { name: "Sweet 16",     start: new Date("2026-03-26"), end: new Date("2026-03-27") },
+    { name: "Elite Eight",  start: new Date("2026-03-28"), end: new Date("2026-03-29") },
+    { name: "Final Four",   start: new Date("2026-04-04"), end: new Date("2026-04-04") },
+    { name: "Championship", start: new Date("2026-04-06"), end: new Date("2026-04-06") },
+];
+
+const getRound = (startTime) => {
+    const d = new Date(startTime);
+    d.setHours(0, 0, 0, 0);
+    for (const r of MM_ROUNDS) {
+        const s = new Date(r.start); s.setHours(0, 0, 0, 0);
+        const e = new Date(r.end);   e.setHours(23, 59, 59, 999);
+        if (d >= s && d <= e) return r.name;
+    }
+};
+
+const ROUND_ORDER = [...MM_ROUNDS.map(r => r.name), "Other"];
+
+const StatsPage = ({ results, tossupGames, betAmount, bettingMode }) => {
     const isFavoriteMode = bettingMode === 'favorite';
     const modeLabel = isFavoriteMode ? 'Favorite' : 'Underdog';
 
-    const wins = results.filter(g => g.pickWon).length;
-    const losses = results.filter(g => !g.pickWon).length;
+    const wins      = results.filter(g => g.pickWon).length;
+    const losses    = results.filter(g => !g.pickWon).length;
     const totalBets = results.length;
-    const winRate = totalBets > 0 ? (wins / totalBets * 100) : 0;
-    const totalPL = results.reduce((sum, g) => sum + g.potentialProfit, 0);
-    const roi = totalBets > 0 ? (totalPL / (betAmount * totalBets) * 100) : 0;
-    const biggestWin = results.filter(g => g.pickWon).sort((a, b) => b.potentialProfit - a.potentialProfit)[0];
+    const winRate   = totalBets > 0 ? (wins / totalBets * 100) : 0;
+    const totalPL   = results.reduce((sum, g) => sum + g.potentialProfit, 0);
+    const roi       = totalBets > 0 ? (totalPL / (betAmount * totalBets) * 100) : 0;
+    const biggestWin = results
+        .filter(g => g.pickWon)
+        .sort((a, b) => b.potentialProfit - a.potentialProfit)[0];
 
     let running = 0;
     const runningPL = results
@@ -167,9 +190,51 @@ const StatsPage = ({results, tossupGames, betAmount, bettingMode}) => {
         .sort((a, b) => a.startTime - b.startTime)
         .map(g => { running += g.potentialProfit; return running; });
 
+    const perfectPL = results.reduce((sum, g) => {
+        const winnerWasFavorite = g.winner === g.favorite;
+        const winnerOdds = winnerWasFavorite ? g.favoriteOdds : g.underdogOdds;
+        if (!winnerOdds) return sum;
+        const profit = winnerOdds > 0
+            ? betAmount * winnerOdds / 100
+            : betAmount * 100 / Math.abs(winnerOdds);
+        return sum + profit;
+    }, 0);
+    const perfectROI = totalBets > 0 ? (perfectPL / (betAmount * totalBets) * 100) : 0;
+
+    const roundMap = {};
+    results.forEach(g => {
+        const round = getRound(g.startTime);
+        if (!roundMap[round]) roundMap[round] = { wins: 0, losses: 0, pickems: 0, pl: 0 };
+        roundMap[round].wins   += g.pickWon ? 1 : 0;
+        roundMap[round].losses += g.pickWon ? 0 : 1;
+        roundMap[round].pl     += g.potentialProfit;
+    });
+    tossupGames.forEach(g => {
+        const round = getRound(g.startTime);
+        if (!roundMap[round]) roundMap[round] = { wins: 0, losses: 0, pickems: 0, pl: 0 };
+        roundMap[round].pickems += 1;
+    });
+
+    const roundRows = ROUND_ORDER
+        .filter(r => roundMap[r])
+        .map(r => {
+            const { wins: rw, losses: rl, pickems: rp, pl: rpl } = roundMap[r];
+            const total = rw + rl;
+            return {
+                name: r,
+                wins: rw,
+                losses: rl,
+                pickems: rp || 0,
+                total,
+                winRate: total > 0 ? (rw / total * 100) : 0,
+                pl: rpl,
+                roi: total > 0 ? (rpl / (betAmount * total) * 100) : 0,
+            };
+        });
+
     return (
         <div className="page-content stats-page">
-            <h2 className="stats-title"> {modeLabel} Stats</h2>
+            <h2 className="stats-title">{modeLabel} Stats</h2>
 
             <div className="stats-grid">
                 <div className="stat-tile">
@@ -216,17 +281,125 @@ const StatsPage = ({results, tossupGames, betAmount, bettingMode}) => {
                         <div className="highlight-label">💰 Biggest Win</div>
                         <div className="highlight-teams">{biggestWin.homeTeam} vs {biggestWin.awayTeam}</div>
                         <div className="highlight-amount">+${biggestWin.potentialProfit.toFixed(2)}</div>
-                        <div className="highlight-date">{biggestWin.startTime.toLocaleDateString()}</div>
+                        <div className="highlight-date">{getRound(biggestWin.startTime)} · {biggestWin.startTime.toLocaleDateString()}</div>
                     </div>
                 )}
             </div>
 
+            {roundRows.length > 0 && (
+                <div className="round-breakdown">
+                    <h3 className="section-heading">By Round</h3>
+                    <div className="round-table-wrap">
+                        <table className="round-table">
+                            <thead>
+                            <tr>
+                                <th>Round</th>
+                                <th>W</th>
+                                <th>L</th>
+                                <th>Pick'em</th>
+                                <th>Win %</th>
+                                <th>P / L</th>
+                                <th>ROI</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {roundRows.map(r => (
+                                <tr key={r.name}>
+                                    <td className="round-name">{r.name}</td>
+                                    <td className="round-wins">{r.wins}</td>
+                                    <td className="round-losses">{r.losses}</td>
+                                    <td className="round-pickems">{r.pickems > 0 ? r.pickems : '—'}</td>
+                                    <td>{r.total > 0 ? `${r.winRate.toFixed(0)}%` : '—'}</td>
+                                    <td className={r.pl > 0 ? 'positive' : r.pl < 0 ? 'negative' : ''}>
+                                        {r.total > 0 ? `${r.pl >= 0 ? '+' : ''}$${r.pl.toFixed(2)}` : '—'}
+                                    </td>
+                                    <td className={r.roi > 0 ? 'positive' : r.roi < 0 ? 'negative' : ''}>
+                                        {r.total > 0 ? `${r.roi >= 0 ? '+' : ''}${r.roi.toFixed(1)}%` : '—'}
+                                    </td>
+                                </tr>
+                            ))}
+                            <tr className="round-totals-row">
+                                <td>Total</td>
+                                <td>{wins}</td>
+                                <td>{losses}</td>
+                                <td>{tossupGames.length > 0 ? tossupGames.length : '—'}</td>
+                                <td>{totalBets > 0 ? `${winRate.toFixed(0)}%` : '—'}</td>
+                                <td className={totalPL > 0 ? 'positive' : totalPL < 0 ? 'negative' : ''}>
+                                    {totalBets > 0 ? `${totalPL >= 0 ? '+' : ''}$${totalPL.toFixed(2)}` : '—'}
+                                </td>
+                                <td className={roi > 0 ? 'positive' : roi < 0 ? 'negative' : ''}>
+                                    {totalBets > 0 ? `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%` : '—'}
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {totalBets > 0 && (
+                <div className="perfect-picks-section">
+                    <h3 className="section-heading">What if you bet every winner?</h3>
+
+                    <div className="perfect-picks-compare">
+                        <div className={`compare-card ${totalPL >= 0 ? 'compare-card--positive' : 'compare-card--negative'}`}>
+                            <div className="compare-card-label">Your strategy</div>
+                            <div className="compare-card-subtitle">{modeLabel} every game</div>
+                            <div className="compare-card-metric">
+                                <span className="compare-metric-value">{wins}/{totalBets}</span>
+                                <span className="compare-metric-label">wins</span>
+                            </div>
+                            <div className="compare-card-metric">
+                                <span className={`compare-metric-value ${totalPL >= 0 ? 'positive' : 'negative'}`}>
+                                    {totalPL >= 0 ? '+' : ''}${totalPL.toFixed(2)}
+                                </span>
+                                <span className="compare-metric-label">P / L</span>
+                            </div>
+                            <div className="compare-card-metric">
+                                <span className={`compare-metric-value ${roi >= 0 ? 'positive' : 'negative'}`}>
+                                    {roi >= 0 ? '+' : ''}{roi.toFixed(1)}%
+                                </span>
+                                <span className="compare-metric-label">ROI</span>
+                            </div>
+                        </div>
+
+                        <div className="compare-vs">vs</div>
+
+                        <div className="compare-card compare-card--perfect">
+                            <div className="compare-card-label">Perfect picks</div>
+                            <div className="compare-card-subtitle">Bet every winner (hindsight)</div>
+                            <div className="compare-card-metric">
+                                <span className="compare-metric-value">{totalBets}/{totalBets}</span>
+                                <span className="compare-metric-label">wins</span>
+                            </div>
+                            <div className="compare-card-metric">
+                                <span className="compare-metric-value positive">
+                                    +${perfectPL.toFixed(2)}
+                                </span>
+                                <span className="compare-metric-label">P / L</span>
+                            </div>
+                            <div className="compare-card-metric">
+                                <span className="compare-metric-value positive">
+                                    +{perfectROI.toFixed(1)}%
+                                </span>
+                                <span className="compare-metric-label">ROI</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="perfect-picks-gap">
+                        <span className="gap-amount">${(perfectPL - totalPL).toFixed(2)}</span>
+                        <span className="gap-label">on the table</span>
+                    </div>
+                </div>
+            )}
+
             {totalBets === 0 && (
                 <p className="empty-state">no results yet — check back after some games complete 🐶</p>
             )}
+
             <div className="about-disclaimer">
-                <p>⚠️ dawg is for entertainment and educational purposes only. no real money is involved. gamble
-                    responsibly.</p>
+                <p>⚠️ dawg is for entertainment and educational purposes only. no real money is involved. gamble responsibly.</p>
             </div>
         </div>
     );
@@ -472,7 +645,6 @@ const UnderdogTracker = () => {
                 startTime: new Date(game.commence_time),
                 underdog, underdogOdds, favorite, favoriteOdds,
                 completed: game.completed || false,
-                // FIX: parse scores as numbers for correct comparison
                 winner: game.scores
                     ? (Number(game.scores[0].score) > Number(game.scores[1].score) ? game.scores[0].name : game.scores[1].name)
                     : null,
@@ -503,7 +675,6 @@ const UnderdogTracker = () => {
                 underdogOdds,
                 favorite,
                 favoriteOdds,
-                // FIX: parse scores as numbers for correct comparison
                 winner: Number(game.scores[0].score) > Number(game.scores[1].score) ? game.scores[0].name : game.scores[1].name,
             };
         });
