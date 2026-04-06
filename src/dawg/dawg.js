@@ -154,8 +154,8 @@ const MM_ROUNDS = [
     { name: "Round of 32",  start: new Date("2026-03-21"), end: new Date("2026-03-23") },
     { name: "Sweet 16",     start: new Date("2026-03-26"), end: new Date("2026-03-28") },
     { name: "Elite Eight",  start: new Date("2026-03-28"), end: new Date("2026-03-30") },
-    { name: "Final Four",   start: new Date("2026-04-04"), end: new Date("2026-04-04") },
-    { name: "Championship", start: new Date("2026-04-06"), end: new Date("2026-04-06") },
+    { name: "Final Four",   start: new Date("2026-04-04"), end: new Date("2026-04-05") },
+    { name: "Championship", start: new Date("2026-04-06"), end: new Date("2026-04-07") },
 ];
 
 const getRound = (startTime) => {
